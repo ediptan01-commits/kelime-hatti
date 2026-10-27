@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -174,10 +175,9 @@ class _GamePageState extends State<GamePage> {
     if (loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     final level = levels[levelIndex];
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(gradient: LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFF263B39), Color(0xFF101F20), Color(0xFF090F10)],
+      body: Container(
+        decoration: const BoxDecoration(image: DecorationImage(
+          image: AssetImage('assets/art/scene.png'), fit: BoxFit.cover,
         )),
         child: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
           final width = math.min(constraints.maxWidth, 420.0);
@@ -272,9 +272,11 @@ class RotaryDial extends StatefulWidget {
 
 class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateMixin {
   late final AnimationController controller;
-  final AudioPlayer sound = AudioPlayer();
+  final AudioPlayer windSound = AudioPlayer();
+  final AudioPlayer returnSound = AudioPlayer();
   bool soundReady = false;
   bool soundPlaying = false;
+  ui.Image? dialArtwork;
   Timer? movementTimer;
   Animation<double>? returning;
   int? active;
@@ -291,39 +293,63 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
     super.initState();
     controller = AnimationController(vsync: this);
     _prepareSound();
+    _loadArtwork();
     controller.addListener(() {
       if (mounted) setState(() => rotation = returning?.value ?? 0);
     });
   }
 
+  Future<void> _loadArtwork() async {
+    try {
+      final data = await rootBundle.load('assets/art/dial.png');
+      final codec = await ui.instantiateImageCodec(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+      final frame = await codec.getNextFrame();
+      codec.dispose();
+      if (!mounted) { frame.image.dispose(); return; }
+      setState(() => dialArtwork = frame.image);
+    } catch (_) {}
+  }
+
   Future<void> _prepareSound() async {
     try {
-      await sound.setReleaseMode(ReleaseMode.loop);
-      await sound.setSource(AssetSource('sounds/rotary.wav'));
-      await sound.setVolume(.55);
-      if (mounted) soundReady = true;
-    } catch (_) {
-      // Sound is optional; dialing still works if the asset is unavailable.
-    }
+      await windSound.setReleaseMode(ReleaseMode.loop);
+      await windSound.setSource(AssetSource('sounds/dial_wind.wav'));
+      await windSound.setVolume(.42);
+      await returnSound.setReleaseMode(ReleaseMode.stop);
+      await returnSound.setSource(AssetSource('sounds/dial_return.wav'));
+      await returnSound.setVolume(.92);
+      soundReady = true;
+    } catch (_) {}
   }
 
   void _startSound() {
     if (!soundReady || soundPlaying) return;
     soundPlaying = true;
-    sound.resume();
+    windSound.resume();
   }
 
   void _stopSound() {
     if (!soundPlaying) return;
     soundPlaying = false;
-    sound.pause();
+    windSound.pause();
+  }
+
+  Future<void> _returnClick() async {
+    if (!soundReady) return;
+    try {
+      await returnSound.stop();
+      await returnSound.play(AssetSource('sounds/dial_return.wav'), volume: .92);
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     movementTimer?.cancel();
     controller.dispose();
-    sound.dispose();
+    windSound.dispose();
+    returnSound.dispose();
+    dialArtwork?.dispose();
     super.dispose();
   }
 
@@ -383,14 +409,15 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
     final accepted = traversed >= .28;
     final from = rotation;
     setState(() => active = null);
-    if (from > .01) _startSound();
+    _stopSound();
+    if (from > .01) _returnClick();
     controller.duration = Duration(milliseconds: (370 + 360 * from / maxTravel).round());
     returning = Tween<double>(begin: from, end: 0).animate(
       CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
     );
     controller.forward(from: 0).then((_) {
       if (!mounted) return;
-      _stopSound();
+      returnSound.stop();
       if (accepted) widget.onLetter(widget.letters[selected]);
     });
   }
@@ -407,7 +434,7 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
         onPanUpdate: (d) => _update(d.localPosition, size),
         onPanEnd: (_) => _end(),
         onPanCancel: _end,
-        child: CustomPaint(painter: DialPainter(widget.letters, rotation, active)),
+        child: CustomPaint(painter: DialPainter(widget.letters, rotation, active, dialArtwork)),
       );
     })),
   ));
@@ -417,7 +444,8 @@ class DialPainter extends CustomPainter {
   final List<String> letters;
   final double rotation;
   final int? active;
-  DialPainter(this.letters, this.rotation, this.active);
+  final ui.Image? artwork;
+  DialPainter(this.letters, this.rotation, this.active, this.artwork);
   @override
   void paint(Canvas canvas, Size size) {
     final c = Offset(size.width / 2, size.height / 2);
@@ -425,23 +453,23 @@ class DialPainter extends CustomPainter {
     void circle(double radius, Color color, {PaintingStyle style = PaintingStyle.fill, double stroke = 1}) {
       canvas.drawCircle(c, radius, Paint()..color = color..style = style..strokeWidth = stroke);
     }
-    circle(r * .99, const Color(0xFF0A0D0D));
-    circle(r * .96, const Color(0xFF4C2D1E));
-    circle(r * .925, const Color(0xFFBA874C));
-    canvas.drawCircle(c, r * .88, Paint()..shader = const RadialGradient(
-      center: Alignment(-.35, -.4), colors: [Color(0xFFBD945A), Color(0xFF78603C), Color(0xFF382C1C)],
-    ).createShader(Rect.fromCircle(center: c, radius: r * .88)));
-    final grain = math.Random(47);
-    for (var i = 0; i < 450; i++) {
-      final a = grain.nextDouble() * math.pi * 2;
-      final d = math.sqrt(grain.nextDouble()) * r * .86;
-      canvas.drawCircle(c + Offset(math.cos(a), math.sin(a)) * d, .4 + grain.nextDouble(), Paint()..color = const Color(0x22352516));
+    if (artwork == null) {
+      circle(r * .99, const Color(0xFF0A0D0D));
+      circle(r * .96, const Color(0xFF4C2D1E));
+      circle(r * .925, const Color(0xFFBA874C));
+      circle(r * .88, const Color(0xFF78603C));
+      circle(r * .865, const Color(0xFFDAB278),
+          style: PaintingStyle.stroke, stroke: r * .022);
     }
-    circle(r * .865, const Color(0xFFDAB278), style: PaintingStyle.stroke, stroke: r * .022);
     canvas.save();
     canvas.translate(c.dx, c.dy);
     canvas.rotate(rotation);
     canvas.translate(-c.dx, -c.dy);
+    if (artwork != null) {
+      final src = Rect.fromLTWH(0, 0, artwork!.width.toDouble(), artwork!.height.toDouble());
+      canvas.drawImageRect(artwork!, src, Rect.fromCircle(center: c, radius: r * .99),
+          Paint()..filterQuality = FilterQuality.high);
+    }
     for (var i = 0; i < 10; i++) {
       final theta = -math.pi / 2 + i * math.pi / 5;
       final center = Offset(c.dx + r * .73 * math.cos(theta), c.dy + r * .73 * math.sin(theta));
@@ -452,6 +480,7 @@ class DialPainter extends CustomPainter {
       final tp = TextPainter(text: TextSpan(text: letters[i], style: TextStyle(color: const Color(0xFF332518), fontFamily: 'serif', fontSize: r * .157, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)..layout();
       tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
     }
+    if (artwork == null) {
     circle(r * .455, const Color(0xFF3B2A1F));
     circle(r * .412, const Color(0xFFD2A062));
     circle(r * .37, const Color(0xFF9D673C));
@@ -462,6 +491,7 @@ class DialPainter extends CustomPainter {
       circle(r * (.12 + i * .009), const Color(0x22734A22), style: PaintingStyle.stroke, stroke: .5);
     }
 
+    }
     canvas.restore();
     final stopper = Rect.fromCenter(center: Offset(c.dx + r * .64, c.dy + r * .66), width: r * .30, height: r * .13);
     canvas.save();
@@ -472,5 +502,5 @@ class DialPainter extends CustomPainter {
     canvas.restore();
   }
   @override
-  bool shouldRepaint(covariant DialPainter oldDelegate) => oldDelegate.rotation != rotation || oldDelegate.active != active || oldDelegate.letters != letters;
+  bool shouldRepaint(covariant DialPainter oldDelegate) => oldDelegate.rotation != rotation || oldDelegate.active != active || oldDelegate.letters != letters || oldDelegate.artwork != artwork;
 }
