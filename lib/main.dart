@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -155,24 +156,15 @@ class _GamePageState extends State<GamePage> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text('BÖLÜM HARİTASI', style: TextStyle(color: _gold, fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 14),
-          ...List.generate(
-            levels.length,
-            (i) => ListTile(
-              dense: true,
-              leading: Icon(i <= unlocked ? Icons.radio_button_checked : Icons.lock_outline, color: i <= unlocked ? _gold : Colors.grey),
-              title: Text('${i + 1}. ${levels[i].name}'),
-              onTap: i > unlocked
-                  ? null
-                  : () {
-                      Navigator.pop(sheetContext);
-                      setState(() {
-                        levelIndex = i;
-                        typed = '';
-                        notice = null;
-                      });
-                    },
-            ),
-          ),
+          ...List.generate(levels.length, (i) => ListTile(
+            dense: true,
+            leading: Icon(i <= unlocked ? Icons.radio_button_checked : Icons.lock_outline, color: i <= unlocked ? _gold : Colors.grey),
+            title: Text('${i + 1}. ${levels[i].name}'),
+            onTap: i > unlocked ? null : () {
+              Navigator.pop(sheetContext);
+              setState(() { levelIndex = i; typed = ''; notice = null; });
+            },
+          )),
         ]),
       )),
     );
@@ -183,40 +175,90 @@ class _GamePageState extends State<GamePage> {
     if (loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     final level = levels[levelIndex];
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('KELİME HATTI', style: TextStyle(color: _gold, fontFamily: 'serif', fontWeight: FontWeight.bold, letterSpacing: 2)), actions: [
-        IconButton(tooltip: 'Bölümler', onPressed: _chooseLevel, icon: const Icon(Icons.map_outlined, color: _gold)),
-      ]),
-      body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0D2225), Color(0xFF1D2927), Color(0xFF39241B)])),
-        child: SafeArea(child: LayoutBuilder(builder: (context, constraints) => SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: ConstrainedBox(constraints: BoxConstraints(minHeight: constraints.maxHeight), child: Column(children: [
-          Text('BÖLÜM ${levelIndex + 1} / ${levels.length}', style: const TextStyle(color: _gold, letterSpacing: 3)),
-          const SizedBox(height: 5),
-          Text(level.name.toUpperCase(), style: const TextStyle(fontSize: 23, fontFamily: 'serif', fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Container(width: double.infinity, padding: const EdgeInsets.all(19), decoration: BoxDecoration(color: _paper, borderRadius: BorderRadius.circular(3), border: Border.all(color: const Color(0xFF967249), width: 2), boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(3, 5), blurRadius: 9)]), child: Column(children: [Text('✦  ${level.name.toUpperCase()}  ✦', style: const TextStyle(color: Color(0xFF765532), fontSize: 12, letterSpacing: 2)), const SizedBox(height: 10), Text(level.clue, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF402818), fontSize: 17, fontStyle: FontStyle.italic))])),
-          const SizedBox(height: 15),
-          Text(typed.isEmpty ? 'NUMARAYI ÇEVİR...' : typed, textAlign: TextAlign.center, style: const TextStyle(color: _gold, fontSize: 26, letterSpacing: 3, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Wrap(alignment: WrapAlignment.center, spacing: 5, runSpacing: 5, children: List.generate(level.answer.length, (i) => Container(width: 29, height: 35, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFF121C1D), border: Border.all(color: _gold.withValues(alpha: .75)), borderRadius: BorderRadius.circular(3)), child: Text(i < typed.length ? typed[i] : '', style: const TextStyle(fontSize: 19, color: _paper, fontWeight: FontWeight.bold))))),
-          const SizedBox(height: 5),
-          Text('${typed.length} / ${level.answer.length} harf', style: const TextStyle(color: Colors.white54)),
-          const SizedBox(height: 15),
-          Container(padding: const EdgeInsets.all(13), decoration: BoxDecoration(color: _wood, borderRadius: BorderRadius.circular(26), border: Border.all(color: const Color(0xFF8E5F38), width: 3), boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 9))]), child: RotaryDial(key: ValueKey(levelIndex), letters: letters, onLetter: _pick)),
-          const SizedBox(height: 18),
-          Text(notice ?? 'Bir harfe basılı tut • Saat yönünde çevir • Bırak', textAlign: TextAlign.center, style: TextStyle(color: notice == null ? Colors.white70 : Colors.orangeAccent)),
-          const SizedBox(height: 15),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            OutlinedButton.icon(onPressed: typed.isEmpty ? null : () => setState(() { typed = typed.substring(0, typed.length - 1); notice = null; }), icon: const Icon(Icons.backspace_outlined), label: const Text('Sil')),
-            const SizedBox(width: 12),
-            FilledButton.icon(style: FilledButton.styleFrom(backgroundColor: _green), onPressed: typed.isEmpty ? null : _check, icon: const Icon(Icons.phone), label: const Text('Ara / Kontrol et')),
-            const SizedBox(width: 12),
-            IconButton(tooltip: 'İpucu', onPressed: () => showDialog<void>(context: context, builder: (ctx) => AlertDialog(title: const Text('İpucu'), content: Text('Kelime ${level.answer.length} harfli ve “${level.clue}” ipucuyla ilgili.'), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tamam'))])), icon: const Icon(Icons.lightbulb_outline, color: _gold)),
-          ]),
-          const SizedBox(height: 12),
-        ])),
-      )))),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [Color(0xFF263B39), Color(0xFF101F20), Color(0xFF090F10)],
+        )),
+        child: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+          final width = math.min(constraints.maxWidth, 420.0);
+          return SingleChildScrollView(
+            child: Center(child: SizedBox(width: width, child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 18),
+              child: Column(children: [
+                Align(alignment: Alignment.centerRight, child: IconButton(
+                  tooltip: 'Bölüm haritası', onPressed: _chooseLevel,
+                  icon: const Icon(Icons.settings, color: Color(0xFFAAAE9F)),
+                )),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [Color(0xFFB58B50), Color(0xFFF1D9A5), Color(0xFFE0BE80), Color(0xFFB98E50)]),
+                    border: Border.all(color: const Color(0xFF83623D), width: 2),
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: const [BoxShadow(color: Colors.black87, blurRadius: 10, offset: Offset(2, 5))],
+                  ),
+                  child: Column(children: [
+                    Text('Bölüm ${levelIndex + 1}', style: const TextStyle(color: Color(0xFF51442D), fontFamily: 'serif', fontSize: 15)),
+                    const SizedBox(height: 3),
+                    Text(level.name.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF332D1C), fontFamily: 'serif', fontSize: 22, fontWeight: FontWeight.bold)),
+                    const Divider(color: Color(0xFFAD8B58), height: 20),
+                    Text(level.clue, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF51402B), fontFamily: 'serif', fontStyle: FontStyle.italic, fontWeight: FontWeight.w600, fontSize: 18, height: 1.35)),
+                  ]),
+                ),
+                const SizedBox(height: 24),
+                LayoutBuilder(builder: (context, box) {
+                  final count = level.answer.length;
+                  final cellWidth = math.min(43.0, (box.maxWidth - count * 4) / count);
+                  return Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(count, (i) => Container(
+                    width: cellWidth, height: 49, margin: const EdgeInsets.symmetric(horizontal: 2), alignment: Alignment.center,
+                    decoration: BoxDecoration(color: const Color(0xFF101B1B), borderRadius: BorderRadius.circular(5), border: Border.all(color: const Color(0xFF948B70), width: 1.5),
+                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 3, offset: Offset(1, 2))]),
+                    child: Text(i < typed.length ? typed[i] : '', style: TextStyle(fontSize: math.min(24.0, cellWidth * .65), color: _paper, fontFamily: 'serif')),
+                  )));
+                }),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(9, 12, 9, 14),
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.elliptical(180, 72), bottom: Radius.circular(20)),
+                    gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [Color(0xFF603B27), Color(0xFF321C15), Color(0xFF4B2B1C), Color(0xFF24130F)]),
+                    border: Border.all(color: const Color(0xFF765139), width: 2),
+                    boxShadow: const [BoxShadow(color: Colors.black87, blurRadius: 14, offset: Offset(0, 7))],
+                  ),
+                  child: Column(children: [
+                    RotaryDial(key: ValueKey(levelIndex), letters: letters, onLetter: _pick),
+                    const SizedBox(height: 10),
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Expanded(child: Column(children: [
+                        IconButton.filledTonal(tooltip: 'Son harfi sil', style: IconButton.styleFrom(backgroundColor: const Color(0xFF655034), foregroundColor: _paper),
+                          onPressed: typed.isEmpty ? null : () => setState(() { typed = typed.substring(0, typed.length - 1); notice = null; }), icon: const Icon(Icons.undo)),
+                        const Text('Sil', style: TextStyle(color: _paper, fontFamily: 'serif')),
+                      ])),
+                      Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(top: 3), child: FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF27633C), foregroundColor: _paper, padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: const BorderSide(color: Color(0xFF65975A), width: 2))),
+                        onPressed: typed.isEmpty ? null : _check,
+                        child: const Text('Kelimeyi\nKontrol Et', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'serif', fontSize: 17)),
+                      ))),
+                      Expanded(child: Column(children: [
+                        IconButton.filledTonal(tooltip: 'İpucu', style: IconButton.styleFrom(backgroundColor: const Color(0xFF655034), foregroundColor: const Color(0xFFFFCE65)),
+                          onPressed: () => showDialog<void>(context: context, builder: (ctx) => AlertDialog(title: const Text('İpucu'), content: Text('Kelime ${level.answer.length} harfli ve “${level.clue}” ipucuyla ilgili.'), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tamam'))])),
+                          icon: const Icon(Icons.lightbulb)),
+                        const Text('İpucu', style: TextStyle(color: _paper, fontFamily: 'serif')),
+                      ])),
+                    ]),
+                  ]),
+                ),
+                if (notice != null) Padding(padding: const EdgeInsets.only(top: 14), child: Text(notice!, textAlign: TextAlign.center, style: const TextStyle(color: _gold))),
+              ]),
+            ))),
+          );
+        })),
+      ),
     );
   }
 }
@@ -232,6 +274,9 @@ class RotaryDial extends StatefulWidget {
 class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateMixin {
   late final AnimationController controller;
   final AudioPlayer sound = AudioPlayer();
+  bool soundReady = false;
+  bool soundPlaying = false;
+  Timer? movementTimer;
   Animation<double>? returning;
   int? active;
   double rotation = 0;
@@ -246,22 +291,38 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     controller = AnimationController(vsync: this);
+    _prepareSound();
     controller.addListener(() {
       if (mounted) setState(() => rotation = returning?.value ?? 0);
     });
   }
 
-  Future<void> _sound(String file) async {
+  Future<void> _prepareSound() async {
     try {
-      await sound.stop();
-      await sound.play(AssetSource('sounds/$file.wav'), volume: .72);
+      await sound.setReleaseMode(ReleaseMode.loop);
+      await sound.setSource(AssetSource('sounds/rotary.wav'));
+      await sound.setVolume(.55);
+      if (mounted) soundReady = true;
     } catch (_) {
-      SystemSound.play(SystemSoundType.click);
+      // Sound is optional; dialing still works if the asset is unavailable.
     }
+  }
+
+  void _startSound() {
+    if (!soundReady || soundPlaying) return;
+    soundPlaying = true;
+    sound.resume();
+  }
+
+  void _stopSound() {
+    if (!soundPlaying) return;
+    soundPlaying = false;
+    sound.pause();
   }
 
   @override
   void dispose() {
+    movementTimer?.cancel();
     controller.dispose();
     sound.dispose();
     super.dispose();
@@ -288,7 +349,7 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
           lastTick = 0;
         });
         HapticFeedback.mediumImpact();
-        _sound('press');
+
         return;
       }
     }
@@ -302,10 +363,15 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
     // Accumulate angular motion so dragging across +/-180 degrees stays smooth.
     // A small backward adjustment is allowed, but rotation never becomes negative.
     traversed = (traversed + delta).clamp(0.0, maxTravel);
+    if (delta.abs() > .002 && traversed > 0) {
+      _startSound();
+      movementTimer?.cancel();
+      movementTimer = Timer(const Duration(milliseconds: 85), _stopSound);
+    }
     final tick = (traversed / .19).floor();
     if (tick > lastTick) {
       HapticFeedback.selectionClick();
-      _sound('tick');
+
     }
     lastTick = tick;
     setState(() => rotation = traversed);
@@ -313,17 +379,20 @@ class _RotaryDialState extends State<RotaryDial> with SingleTickerProviderStateM
 
   void _end() {
     if (active == null) return;
+    movementTimer?.cancel();
     final selected = active!;
     final accepted = traversed >= .28;
     final from = rotation;
     setState(() => active = null);
-    _sound('return');
+    if (from > .01) _startSound();
     controller.duration = Duration(milliseconds: (370 + 360 * from / maxTravel).round());
     returning = Tween<double>(begin: from, end: 0).animate(
       CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
     );
     controller.forward(from: 0).then((_) {
-      if (accepted && mounted) widget.onLetter(widget.letters[selected]);
+      if (!mounted) return;
+      _stopSound();
+      if (accepted) widget.onLetter(widget.letters[selected]);
     });
   }
 
@@ -360,7 +429,15 @@ class DialPainter extends CustomPainter {
     circle(r * .99, const Color(0xFF0A0D0D));
     circle(r * .96, const Color(0xFF4C2D1E));
     circle(r * .925, const Color(0xFFBA874C));
-    circle(r * .88, const Color(0xFF181A19));
+    canvas.drawCircle(c, r * .88, Paint()..shader = const RadialGradient(
+      center: Alignment(-.35, -.4), colors: [Color(0xFFBD945A), Color(0xFF78603C), Color(0xFF382C1C)],
+    ).createShader(Rect.fromCircle(center: c, radius: r * .88)));
+    final grain = math.Random(47);
+    for (var i = 0; i < 450; i++) {
+      final a = grain.nextDouble() * math.pi * 2;
+      final d = math.sqrt(grain.nextDouble()) * r * .86;
+      canvas.drawCircle(c + Offset(math.cos(a), math.sin(a)) * d, .4 + grain.nextDouble(), Paint()..color = const Color(0x22352516));
+    }
     circle(r * .865, const Color(0xFFDAB278), style: PaintingStyle.stroke, stroke: r * .022);
     canvas.save();
     canvas.translate(c.dx, c.dy);
@@ -373,21 +450,26 @@ class DialPainter extends CustomPainter {
       canvas.drawCircle(center + Offset(1, 3), r * .157, Paint()..color = Colors.black87);
       canvas.drawCircle(center, r * .148, Paint()..color = selected ? const Color(0xFFFFD575) : const Color(0xFFEBD6B4));
       if (selected) canvas.drawCircle(center, r * .157, Paint()..color = const Color(0xFFFFEAB3)..style = PaintingStyle.stroke..strokeWidth = 4);
-      final tp = TextPainter(text: TextSpan(text: letters[i], style: TextStyle(color: const Color(0xFF332518), fontSize: r * .157, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)..layout();
+      final tp = TextPainter(text: TextSpan(text: letters[i], style: TextStyle(color: const Color(0xFF332518), fontFamily: 'serif', fontSize: r * .157, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)..layout();
       tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
     }
     circle(r * .455, const Color(0xFF3B2A1F));
     circle(r * .412, const Color(0xFFD2A062));
     circle(r * .37, const Color(0xFF9D673C));
-    circle(r * .335, const Color(0xFFBD8C56));
-    circle(r * .29, const Color(0xFF79502E));
+    canvas.drawCircle(c, r * .335, Paint()..shader = const SweepGradient(
+      colors: [Color(0xFF795025), Color(0xFFE9C47F), Color(0xFF8A592C), Color(0xFFD5A75C), Color(0xFF795025)],
+    ).createShader(Rect.fromCircle(center: c, radius: r * .335)));
+    for (var i = 1; i < 22; i++) {
+      circle(r * (.12 + i * .009), const Color(0x22734A22), style: PaintingStyle.stroke, stroke: .5);
+    }
+
     canvas.restore();
     final stopper = Rect.fromCenter(center: Offset(c.dx + r * .64, c.dy + r * .66), width: r * .30, height: r * .13);
     canvas.save();
     canvas.translate(stopper.center.dx, stopper.center.dy);
     canvas.rotate(-.7);
     canvas.translate(-stopper.center.dx, -stopper.center.dy);
-    canvas.drawRRect(RRect.fromRectAndRadius(stopper, Radius.circular(r * .07)), Paint()..color = const Color(0xFFD9BA81));
+    canvas.drawRRect(RRect.fromRectAndRadius(stopper, Radius.circular(r * .07)), Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFE0DFCA), Color(0xFF555D58), Color(0xFFAEB3A4)]).createShader(stopper));
     canvas.restore();
   }
   @override
