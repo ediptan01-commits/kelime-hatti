@@ -26,4 +26,3 @@ jobs:
         with:
           name: kelime-hatti-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-          
