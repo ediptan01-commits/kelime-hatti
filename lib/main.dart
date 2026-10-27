@@ -14,7 +14,6 @@ const _paper = Color(0xFFF2D5A0);
 const _dark = Color(0xFF0D2528);
 const _gold = Color(0xFFD6A65B);
 const _green = Color(0xFF236744);
-const _wood = Color(0xFF3D2319);
 
 class Level {
   final String name;
