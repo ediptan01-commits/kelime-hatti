@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+part 'adventure.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,12 +102,13 @@ class KelimeHattiApp extends StatelessWidget {
             brightness: Brightness.dark,
             scaffoldBackgroundColor: _dark,
             colorSchemeSeed: _gold),
-        home: const GamePage(),
+        home: const CaseDeskPage(),
       );
 }
 
 class GamePage extends StatefulWidget {
-  const GamePage({super.key});
+  final bool adventure;
+  const GamePage({super.key, this.adventure = false});
   @override
   State<GamePage> createState() => _GamePageState();
 }
@@ -114,14 +118,15 @@ class _GamePageState extends State<GamePage> {
   int unlocked = 0;
   String typed = '';
   bool loading = true;
+  bool checking = false;
+  int attempts = 0;
   String? notice;
-  // Each puzzle uses a ten-hole dial. A long word can reuse the same holes.
+  CaseProgress? progress;
   late List<List<String>> shuffledDials;
-
+  List<Level> get puzzles => widget.adventure ? caseLevels : levels;
   List<String> get letters => shuffledDials[levelIndex];
-
   List<String> _buildLetters(int index) {
-    final base = <String>{...levels[index].answer.split('')};
+    final base = <String>{...puzzles[index].answer.split('')};
     const pool = [
       'A',
       'E',
@@ -165,22 +170,30 @@ class _GamePageState extends State<GamePage> {
   @override
   void initState() {
     super.initState();
-    shuffledDials = List.generate(levels.length, _buildLetters);
+    shuffledDials = List.generate(puzzles.length, _buildLetters);
     _load();
   }
 
   Future<void> _load() async {
     final pref = await SharedPreferences.getInstance();
+    final saved = widget.adventure ? await CaseProgress.load() : null;
     if (!mounted) return;
     setState(() {
-      unlocked = (pref.getInt('unlocked') ?? 0).clamp(0, levels.length - 1);
-      levelIndex = unlocked;
+      progress = saved;
+      unlocked = saved?.unlocked ??
+          (pref.getInt('unlocked') ?? 0).clamp(0, levels.length - 1);
+      levelIndex = saved?.current ?? unlocked;
       loading = false;
     });
+    if (widget.adventure && !progress!.calls.contains(levelIndex)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showCall();
+      });
+    }
   }
 
   void _pick(String letter) {
-    if (typed.length >= levels[levelIndex].answer.length) return;
+    if (checking || typed.length >= puzzles[levelIndex].answer.length) return;
     setState(() {
       typed += letter;
       notice = null;
@@ -188,99 +201,330 @@ class _GamePageState extends State<GamePage> {
     HapticFeedback.selectionClick();
   }
 
-  Future<void> _check() async {
-    if (typed.isEmpty) return;
-    if (typed != levels[levelIndex].answer) {
-      HapticFeedback.heavyImpact();
-      setState(() => notice = 'Hat meşgul! Kelimeyi yeniden dene.');
-      return;
-    }
-    HapticFeedback.mediumImpact();
-    SystemSound.play(SystemSoundType.alert);
-    final current = levels[levelIndex];
-    final last = levelIndex == levels.length - 1;
-    if (levelIndex == unlocked && !last) {
-      unlocked++;
-      final pref = await SharedPreferences.getInstance();
-      await pref.setInt('unlocked', unlocked);
-    }
-    if (!mounted) return;
+  Future<void> _showCall() async {
+    if (!widget.adventure || checking || progress == null) return;
+    final i = levelIndex;
+    final level = caseLevels[i];
     await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF173438),
-        title: const Row(children: [
-          Icon(Icons.phone_in_talk, color: _gold),
-          SizedBox(width: 10),
-          Expanded(child: Text('GELEN ÇAĞRI'))
-        ]),
-        content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(current.story,
-                  style: const TextStyle(color: _paper, fontSize: 16)),
-              const SizedBox(height: 18),
-              const Text('Bilinmeyen numara:', style: TextStyle(color: _gold)),
-              Text('“${current.incomingClue}”',
-                  style: const TextStyle(
-                      fontStyle: FontStyle.italic, fontSize: 17)),
-            ]),
-        actions: [
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _green),
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(last ? 'Hikâyeyi bitir' : 'Sonraki bölüme geç'),
-          )
-        ],
-      ),
-    );
+        context: context,
+        builder: (ctx) => AlertDialog(
+              backgroundColor: const Color(0xFF18352F),
+              title: Row(children: [
+                const Icon(Icons.phone_in_talk, color: _gold),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Text(level.caller,
+                        style: const TextStyle(
+                            color: _paper, fontFamily: 'serif', fontSize: 21)))
+              ]),
+              content: SingleChildScrollView(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                    Text('${i ~/ 4 + 1}. perde · ${_caseActs[i ~/ 4]}',
+                        style: const TextStyle(color: _gold, fontSize: 12)),
+                    const SizedBox(height: 14),
+                    Text('“${level.message}”',
+                        style: const TextStyle(
+                            color: _paper, fontSize: 17, height: 1.5)),
+                  ])),
+              actions: [
+                FilledButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('İpucunu incele'))
+              ],
+            ));
     if (!mounted) return;
-    setState(() {
-      if (!last) levelIndex++;
-      typed = '';
-      notice = last ? 'Tebrikler! 10 bölüm tamamlandı.' : null;
-    });
+    progress!.calls.add(i);
+    await progress!.save();
   }
 
-  void _chooseLevel() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF18363A),
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-          child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('BÖLÜM HARİTASI',
-              style: TextStyle(
-                  color: _gold, fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 14),
-          ...List.generate(
-              levels.length,
-              (i) => ListTile(
-                    dense: true,
-                    leading: Icon(
-                        i <= unlocked
-                            ? Icons.radio_button_checked
-                            : Icons.lock_outline,
-                        color: i <= unlocked ? _gold : Colors.grey),
-                    title: Text('${i + 1}. ${levels[i].name}'),
-                    onTap: i > unlocked
-                        ? null
-                        : () {
-                            Navigator.pop(sheetContext);
-                            setState(() {
-                              levelIndex = i;
-                              typed = '';
-                              notice = null;
-                            });
-                          },
-                  )),
-        ]),
-      )),
-    );
+  Future<void> _showHint() async {
+    if (checking) return;
+    final level = puzzles[levelIndex];
+    if (!widget.adventure) {
+      await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                  title: const Text('İpucu'),
+                  content: Text(
+                      'Kelime ${level.answer.length} harfli ve “${level.clue}” ipucuyla ilgili.'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Tamam'))
+                  ]));
+      return;
+    }
+    final i = levelIndex;
+    var used = progress!.hints[i] ?? 0;
+    await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: const Color(0xFF17362F),
+        builder: (ctx) => StatefulBuilder(
+            builder: (context, update) => SafeArea(
+                child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Birlikte çözelim',
+                              style: TextStyle(
+                                  color: _paper,
+                                  fontFamily: 'serif',
+                                  fontSize: 26)),
+                          const SizedBox(height: 12),
+                          const Text(
+                              'İpuçları ücretsiz. Yanlış cevap vermek ilerlemeni silmez.',
+                              style: TextStyle(
+                                  color: Color(0xFFACB9A7), height: 1.4)),
+                          const SizedBox(height: 16),
+                          if (used == 0)
+                            const Text('Önce bir anlam ipucu açabilirsin.',
+                                style: TextStyle(color: _paper)),
+                          for (var n = 0; n < used; n++)
+                            Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                    '${n + 1}. ${caseLevels[i].hints[n]}',
+                                    style: const TextStyle(
+                                        color: _paper,
+                                        fontSize: 17,
+                                        height: 1.4))),
+                          const SizedBox(height: 8),
+                          if (used < 3)
+                            FilledButton(
+                                onPressed: () async {
+                                  update(() => used++);
+                                  progress!.hints[i] = used;
+                                  await progress!.save();
+                                },
+                                child: Text(used == 0
+                                    ? 'Anlam ipucunu aç'
+                                    : used == 1
+                                        ? 'İlk harfi göster'
+                                        : 'Başlangıcı göster'))
+                          else
+                            OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    typed = level.answer.substring(
+                                        0, math.min(3, level.answer.length));
+                                    notice = null;
+                                  });
+                                  Navigator.pop(ctx);
+                                },
+                                child: const Text(
+                                    'İlk harfleri kutulara yerleştir')),
+                        ])))));
+  }
+
+  Future<void> _check() async {
+    if (checking || typed.isEmpty) return;
+    if (typed != puzzles[levelIndex].answer) {
+      HapticFeedback.heavyImpact();
+      setState(() {
+        attempts++;
+        notice = widget.adventure && attempts >= 2
+            ? 'Birlikte çözelim · İpucu düğmesine dokun.'
+            : 'Hat meşgul! Kelimeyi yeniden dene.';
+      });
+      return;
+    }
+    setState(() => checking = true);
+    HapticFeedback.mediumImpact();
+    final i = levelIndex;
+    final current = puzzles[i];
+    final last = i == puzzles.length - 1;
+    final firstDiscovery = widget.adventure && !progress!.solved.contains(i);
+    try {
+      if (widget.adventure) {
+        progress!.solved.add(i);
+        progress!.current = last ? i : i + 1;
+        unlocked = progress!.unlocked;
+        await progress!.save();
+      } else if (i == unlocked && !last) {
+        unlocked++;
+        final pref = await SharedPreferences.getInstance();
+        await pref.setInt('unlocked', unlocked);
+      }
+      if (!mounted) return;
+      await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+                backgroundColor: const Color(0xFF173438),
+                title: Text(
+                    widget.adventure
+                        ? firstDiscovery
+                            ? 'Yeni kanıt bulundu'
+                            : 'Kanıtı yeniden incele'
+                        : 'GELEN ÇAĞRI',
+                    style: const TextStyle(color: _gold, fontFamily: 'serif')),
+                content: SingleChildScrollView(
+                    child: widget.adventure
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                Text(caseLevels[i].evidence,
+                                    style: const TextStyle(
+                                        color: _gold, fontSize: 17)),
+                                const SizedBox(height: 12),
+                                _EvidenceContent(level: caseLevels[i]),
+                                const SizedBox(height: 14),
+                                Text(current.incomingClue,
+                                    style: const TextStyle(
+                                        color: _gold,
+                                        fontStyle: FontStyle.italic)),
+                              ])
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                Text(current.story,
+                                    style: const TextStyle(
+                                        color: _paper, fontSize: 16)),
+                                const SizedBox(height: 18),
+                                Text('“${current.incomingClue}”',
+                                    style: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 17))
+                              ])),
+                actions: [
+                  FilledButton(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: _green, foregroundColor: _paper),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(last
+                          ? widget.adventure
+                              ? 'Son kararını ver'
+                              : 'Hikâyeyi bitir'
+                          : 'Sonraki çağrı'))
+                ],
+              ));
+      if (!mounted) return;
+      if (last && widget.adventure) {
+        await Navigator.pushReplacement<void, void>(
+            context, MaterialPageRoute(builder: (_) => const CaseFinalePage()));
+        return;
+      }
+      setState(() {
+        if (!last) levelIndex++;
+        typed = '';
+        attempts = 0;
+        notice = last ? 'Tebrikler! 10 bölüm tamamlandı.' : null;
+      });
+      if (widget.adventure) {
+        progress!.current = levelIndex;
+        await progress!.save();
+      }
+    } finally {
+      if (mounted) setState(() => checking = false);
+    }
+    if (mounted && widget.adventure && !progress!.calls.contains(levelIndex)) {
+      _showCall();
+    }
+  }
+
+  Future<void> _chooseLevel() async {
+    if (checking) return;
+    final selected = await showModalBottomSheet<int>(
+        context: context,
+        backgroundColor: const Color(0xFF18363A),
+        isScrollControlled: true,
+        builder: (ctx) => SafeArea(
+            child: SizedBox(
+                height: MediaQuery.sizeOf(ctx).height * .8,
+                child: Column(children: [
+                  Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Text(
+                          widget.adventure
+                              ? 'Dosya haritası'
+                              : 'BÖLÜM HARİTASI',
+                          style: const TextStyle(
+                              color: _gold,
+                              fontSize: 23,
+                              fontFamily: 'serif'))),
+                  Expanded(
+                      child: ListView.builder(
+                          itemCount: puzzles.length,
+                          itemBuilder: (context, i) => ListTile(
+                                leading: Icon(
+                                    widget.adventure &&
+                                            progress!.solved.contains(i)
+                                        ? Icons.check_circle
+                                        : i <= unlocked
+                                            ? Icons.radio_button_checked
+                                            : Icons.lock_outline,
+                                    color: i <= unlocked ? _gold : Colors.grey),
+                                title: Text('${i + 1}. ${puzzles[i].name}',
+                                    style: const TextStyle(color: _paper)),
+                                subtitle: widget.adventure
+                                    ? Text(_caseActs[i ~/ 4],
+                                        style: const TextStyle(
+                                            color: Color(0xFF98AD9A)))
+                                    : null,
+                                onTap: i > unlocked
+                                    ? null
+                                    : () => Navigator.pop(ctx, i),
+                              ))),
+                ]))));
+    if (!mounted || selected == null) return;
+    setState(() {
+      levelIndex = selected;
+      typed = '';
+      attempts = 0;
+      notice = null;
+    });
+    if (widget.adventure) {
+      progress!.current = selected;
+      await progress!.save();
+      if (mounted && !progress!.calls.contains(selected)) _showCall();
+    }
+  }
+
+  Future<void> _caseMenu() async {
+    if (checking) return;
+    final selected = await showModalBottomSheet<String>(
+        context: context,
+        backgroundColor: const Color(0xFF18363A),
+        builder: (ctx) => SafeArea(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+              ListTile(
+                  leading: const Icon(Icons.phone, color: _gold),
+                  title: const Text('Çağrıyı yeniden oku'),
+                  onTap: () => Navigator.pop(ctx, 'call')),
+              ListTile(
+                  leading: const Icon(Icons.menu_book, color: _gold),
+                  title: const Text('Kanıt ve Bilgi Defteri'),
+                  onTap: () => Navigator.pop(ctx, 'book')),
+              ListTile(
+                  leading: const Icon(Icons.map_outlined, color: _gold),
+                  title: const Text('Dosya haritası'),
+                  onTap: () => Navigator.pop(ctx, 'map')),
+              ListTile(
+                  leading: const Icon(Icons.home_outlined, color: _gold),
+                  title: const Text('Dosya masasına dön'),
+                  onTap: () => Navigator.pop(ctx, 'home')),
+            ])));
+    if (!mounted) return;
+    switch (selected) {
+      case 'call':
+        await _showCall();
+      case 'book':
+        await _showNotebook(context, progress!);
+      case 'map':
+        await _chooseLevel();
+      case 'home':
+        Navigator.pop(context);
+      default:
+        break;
+    }
   }
 
   @override
@@ -288,7 +532,7 @@ class _GamePageState extends State<GamePage> {
     if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final level = levels[levelIndex];
+    final level = puzzles[levelIndex];
     return Scaffold(
       body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
         return Center(
@@ -301,12 +545,28 @@ class _GamePageState extends State<GamePage> {
                     Positioned.fill(
                         child: Image.asset('assets/art/scene.png',
                             fit: BoxFit.fill)),
+                    if (widget.adventure)
+                      Positioned(
+                          left: 12,
+                          top: 10,
+                          child: IconButton(
+                              tooltip: 'Kanıt ve Bilgi Defteri',
+                              onPressed: checking
+                                  ? null
+                                  : () => _showNotebook(context, progress!),
+                              style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0x663A4A45)),
+                              icon: const Icon(Icons.menu_book,
+                                  color: _gold, size: 22))),
                     Positioned(
                         right: 12,
                         top: 10,
                         child: IconButton(
-                          tooltip: 'Bölüm haritası',
-                          onPressed: _chooseLevel,
+                          tooltip: widget.adventure
+                              ? 'Dosya menüsü'
+                              : 'Bölüm haritası',
+                          onPressed:
+                              widget.adventure ? _caseMenu : _chooseLevel,
                           style: IconButton.styleFrom(
                               backgroundColor: const Color(0x663A4A45),
                               side: const BorderSide(color: Color(0x665C6B5E))),
@@ -318,7 +578,10 @@ class _GamePageState extends State<GamePage> {
                         right: 48,
                         top: 83,
                         height: 20,
-                        child: Text('Bölüm ${levelIndex + 1}',
+                        child: Text(
+                            widget.adventure
+                                ? 'Dosya 01 · ${levelIndex + 1}/12'
+                                : 'Bölüm ${levelIndex + 1}',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                                 color: Color(0xFF4E432C),
@@ -420,7 +683,7 @@ class _GamePageState extends State<GamePage> {
                                   borderRadius: BorderRadius.circular(15),
                                   side: const BorderSide(
                                       color: Color(0xFF60814B), width: 2))),
-                          onPressed: typed.isEmpty ? null : _check,
+                          onPressed: checking || typed.isEmpty ? null : _check,
                           child: const Text('Kelimeyi\nKontrol Et',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -464,18 +727,7 @@ class _GamePageState extends State<GamePage> {
                               tooltip: 'İpucu',
                               icon: Icons.lightbulb,
                               glow: true,
-                              onPressed: () => showDialog<void>(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                          title: const Text('İpucu'),
-                                          content: Text(
-                                              'Kelime ${level.answer.length} harfli ve “${level.clue}” ipucuyla ilgili.'),
-                                          actions: [
-                                            TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(ctx),
-                                                child: const Text('Tamam'))
-                                          ]))),
+                              onPressed: _showHint),
                           const SizedBox(height: 4),
                           const SizedBox(
                               height: 21,
