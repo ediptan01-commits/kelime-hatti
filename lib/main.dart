@@ -571,6 +571,8 @@ class RotarySound {
   bool _disposed = false;
 
   Future<void> _prepare() async {
+    await _wind.setPlayerMode(PlayerMode.lowLatency);
+    await _return.setPlayerMode(PlayerMode.lowLatency);
     await _wind.setReleaseMode(ReleaseMode.loop);
     await _return.setReleaseMode(ReleaseMode.loop);
     await _wind.setSource(AssetSource('sounds/dial_wind.wav'));
@@ -590,13 +592,11 @@ class RotarySound {
       try {
         await _ready;
         if (_disposed || _phase != phase) return;
-        await _wind.pause();
-        await _return.pause();
+        await Future.wait([_wind.pause(), _return.pause()]);
         if (_disposed || _phase != phase || phase == DialSoundPhase.idle) {
           return;
         }
         final player = phase == DialSoundPhase.winding ? _wind : _return;
-        await player.seek(Duration.zero);
         if (!_disposed && _phase == phase) await player.resume();
       } catch (_) {
         // Missing audio hardware must never prevent the dial from returning.
@@ -690,7 +690,7 @@ class _RotaryDialState extends State<RotaryDial>
     setState(() => rotation = next);
     unawaited(sound.setPhase(DialSoundPhase.winding));
     movementTimer?.cancel();
-    movementTimer = Timer(const Duration(milliseconds: 90), () {
+    movementTimer = Timer(const Duration(milliseconds: 45), () {
       if (!returning) unawaited(sound.setPhase(DialSoundPhase.idle));
     });
   }
