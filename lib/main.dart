@@ -185,11 +185,6 @@ class _GamePageState extends State<GamePage> {
       levelIndex = saved?.current ?? unlocked;
       loading = false;
     });
-    if (widget.adventure && !progress!.calls.contains(levelIndex)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showCall();
-      });
-    }
   }
 
   void _pick(String letter) {
@@ -339,7 +334,6 @@ class _GamePageState extends State<GamePage> {
     final i = levelIndex;
     final current = puzzles[i];
     final last = i == puzzles.length - 1;
-    final firstDiscovery = widget.adventure && !progress!.solved.contains(i);
     try {
       if (widget.adventure) {
         progress!.solved.add(i);
@@ -352,60 +346,24 @@ class _GamePageState extends State<GamePage> {
         await pref.setInt('unlocked', unlocked);
       }
       if (!mounted) return;
-      await showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-                backgroundColor: const Color(0xFF173438),
-                title: Text(
-                    widget.adventure
-                        ? firstDiscovery
-                            ? 'Yeni kanıt bulundu'
-                            : 'Kanıtı yeniden incele'
-                        : 'GELEN ÇAĞRI',
-                    style: const TextStyle(color: _gold, fontFamily: 'serif')),
-                content: SingleChildScrollView(
-                    child: widget.adventure
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                                Text(caseLevels[i].evidence,
-                                    style: const TextStyle(
-                                        color: _gold, fontSize: 17)),
-                                const SizedBox(height: 12),
-                                _EvidenceContent(level: caseLevels[i]),
-                                const SizedBox(height: 14),
-                                Text(current.incomingClue,
-                                    style: const TextStyle(
-                                        color: _gold,
-                                        fontStyle: FontStyle.italic)),
-                              ])
-                        : Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                                Text(current.story,
-                                    style: const TextStyle(
-                                        color: _paper, fontSize: 16)),
-                                const SizedBox(height: 18),
-                                Text('“${current.incomingClue}”',
-                                    style: const TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                        fontSize: 17))
-                              ])),
-                actions: [
-                  FilledButton(
-                      style: FilledButton.styleFrom(
-                          backgroundColor: _green, foregroundColor: _paper),
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text(last
-                          ? widget.adventure
-                              ? 'Son kararını ver'
-                              : 'Hikâyeyi bitir'
-                          : 'Sonraki çağrı'))
-                ],
-              ));
+      if (!widget.adventure) {
+        await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+                  backgroundColor: const Color(0xFF173438),
+                  title: const Text('GELEN ÇAĞRI',
+                      style: TextStyle(color: _gold, fontFamily: 'serif')),
+                  content: SingleChildScrollView(
+                      child: Text('${current.story}\n\n${current.incomingClue}',
+                          style: const TextStyle(color: _paper, height: 1.4))),
+                  actions: [
+                    FilledButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(last ? 'Hikâyeyi bitir' : 'Sonraki çağrı'))
+                  ],
+                ));
+      }
       if (!mounted) return;
       if (last && widget.adventure) {
         await Navigator.pushReplacement<void, void>(
@@ -416,7 +374,11 @@ class _GamePageState extends State<GamePage> {
         if (!last) levelIndex++;
         typed = '';
         attempts = 0;
-        notice = last ? 'Tebrikler! 10 bölüm tamamlandı.' : null;
+        notice = widget.adventure
+            ? '✓ ${current.answer} · ${current.incomingClue}'
+            : last
+                ? 'Tebrikler! 10 bölüm tamamlandı.'
+                : null;
       });
       if (widget.adventure) {
         progress!.current = levelIndex;
@@ -424,9 +386,6 @@ class _GamePageState extends State<GamePage> {
       }
     } finally {
       if (mounted) setState(() => checking = false);
-    }
-    if (mounted && widget.adventure && !progress!.calls.contains(levelIndex)) {
-      _showCall();
     }
   }
 
@@ -484,7 +443,6 @@ class _GamePageState extends State<GamePage> {
     if (widget.adventure) {
       progress!.current = selected;
       await progress!.save();
-      if (mounted && !progress!.calls.contains(selected)) _showCall();
     }
   }
 

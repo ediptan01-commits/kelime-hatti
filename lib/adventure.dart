@@ -19,7 +19,7 @@ class CaseLevel extends Level {
       required this.hints});
 }
 
-const caseLevels = <CaseLevel>[
+const _caseArchive = <CaseLevel>[
   CaseLevel(
       'Gece Gelen Hat',
       'Eski belgelerin düzenlenip korunduğu yer. İlk iz burada saklı.',
@@ -238,6 +238,100 @@ const caseLevels = <CaseLevel>[
       ]),
 ];
 
+// Fast play: a short riddle, a short answer, then one line of mystery.
+const _quickPuzzles = <(String, String, String, String)>[
+  (
+    'SAAT',
+    'Akrep ve yelkovanım var. Yürürüm ama yerimden gitmem.',
+    'Vitrin boş. Çekmecede bir iz var.',
+    'Zamanı gösteren eşya.'
+  ),
+  (
+    'ZARF',
+    'Mektubu saklarım, üstümde pul taşırım. Neyim?',
+    'Zarftaki 42 sayısı neyi gizliyor?',
+    'Kâğıttan yapılan mektup kabı.'
+  ),
+  (
+    'IŞIK',
+    'Karanlık odayı görünür yapan şey nedir?',
+    'Kâğıtta gizli bir yıldız belirdi.',
+    'Görmek için gözümüze ulaşması gerekir.'
+  ),
+  (
+    'İZİN',
+    '“Saati götürebilirsiniz.” Bu söz bir ... verir.',
+    '09.00: Saati götürmeye onay var.',
+    'Bir şeyi yapmana onay verilmesi.'
+  ),
+  (
+    'HAT',
+    'İki telefonu birbirine bağlayan bağlantı.',
+    'İstasyondan gizli bir mesaj geldi.',
+    'Telefon ... çekmiyor deriz.'
+  ),
+  (
+    'MORS',
+    'Nokta + çizgi = hangi haberleşme kodu?',
+    'Mesaj: SATIŞ YOK. Peki fiyatlar?',
+    'S üç nokta, O üç çizgidir.'
+  ),
+  (
+    'TAKAS',
+    'Para yok! Bir eşya ver, başka bir eşya al.',
+    'Teklif var. Ama imza neden yok?',
+    'Para kullanmadan değişim yapmak.'
+  ),
+  (
+    'BÜTÇE',
+    'Gelir 100, gider 80. Bu para planının adı ne?',
+    'Rakamlar satış değil, gider planı.',
+    'Gelir ve giderleri planlar.'
+  ),
+  (
+    'ZAM',
+    'Dün 10, bugün 12 lira. Fiyata ne gelmiş?',
+    'Pahalanan saat değil, bir parça!',
+    'Bir fiyatın yükselmesi.'
+  ),
+  (
+    'YAY',
+    'Sıkışırım, bırakınca açılırım. Saatin içinde de varım.',
+    'Kırık parça bulundu. Saat ustada!',
+    'Esnek, kıvrılmış bir metal parça.'
+  ),
+  (
+    'İSİM',
+    'Saatin sahibi Leyla. “Leyla” onun neyi?',
+    'Makbuzda Leyla yazıyor. İade var.',
+    'Sana nasıl sesleneceğimizi söyler.'
+  ),
+  (
+    'SIRA',
+    '09.00 → 10.00 → 10.15. Olayları zaman ...sına koy.',
+    'Bütün izler birleşti. Son karar!',
+    'Önce ne oldu, sonra ne oldu?'
+  ),
+];
+
+final caseLevels =
+    List<CaseLevel>.unmodifiable(List.generate(_caseArchive.length, (i) {
+  final old = _caseArchive[i];
+  final quick = _quickPuzzles[i];
+  return CaseLevel(old.name, quick.$2, quick.$1, old.story, quick.$3,
+      caller: old.caller,
+      message: quick.$3,
+      evidence: old.evidence,
+      fact: old.fact,
+      source: old.source,
+      sourceUrl: old.sourceUrl,
+      hints: [
+        quick.$4,
+        'İlk harf: ${quick.$1[0]}',
+        'Başlangıç: ${quick.$1.substring(0, 2)}'
+      ]);
+}));
+
 const _caseActs = ['Kilitli Arşiv', 'Yanlış Hesap', 'Son Kayıt'];
 const _caseSaveKey = 'case_kayip_emanet_v1';
 
@@ -408,7 +502,7 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
                                           fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 12),
                                   const Text(
-                                      'Bir müze. Boş bir vitrin. Birbirini tutmayan belgeler.\n\nGece gelen aramaları takip et, kanıtları topla ve kayıp saatin sırrını çöz.',
+                                      'Saat kayıp!\nKısa bulmacaları çöz, izleri birleştir.\nHer cevap seni sırrına yaklaştırır.',
                                       style: TextStyle(
                                           color: Color(0xFFD4D8CB),
                                           fontSize: 15,
@@ -456,8 +550,7 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
                                                       ? 'Kaldığın yerden devam et'
                                                       : 'Hattı aç'))),
                                   const SizedBox(height: 8),
-                                  const Text(
-                                      '12 bölüm · 3 perde · yazılı çağrılar',
+                                  const Text('12 kısa bulmaca · tek gizem',
                                       style: TextStyle(
                                           color: Color(0xFF9AA99D),
                                           fontSize: 12)),
@@ -655,8 +748,7 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
       return;
     }
     if (choice != 1) {
-      setState(() => feedback =
-          'Sevk izni, atölye iş emri ve iade makbuzunu birlikte düşün. Reddedilen bir teklif, gerçekleşmiş bir satış değildir.');
+      setState(() => feedback = 'İzin + usta + iade makbuzu. Bir daha düşün!');
       return;
     }
     setState(() => saving = true);
@@ -707,7 +799,7 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
                             color: _gold, fontFamily: 'serif', fontSize: 24)),
                     const SizedBox(height: 14),
                     const Text(
-                        'Leyla’nın izniyle onarım için ustaya götürülmüştü. Saat hâlâ Leyla’ya aitti. Yeni envanter defterine sevk ve emanet notu aktarılmayınca kayıp sanılmıştı.\n\nİmzalanmamış teklif bir satış değildi; fiyatların bulunduğu sayfa ise onarım bütçesiydi. Belgeleri zaman sırasına koyarak gerçeği ortaya çıkardın.',
+                        'Saat satılmamıştı. Leyla izin vermiş, usta onarıma almıştı. Eksik kayıt herkesi yanıltmıştı. Sen izleri birleştirdin!',
                         style: TextStyle(
                             color: _paper, height: 1.6, fontSize: 16)),
                     const SizedBox(height: 24),
@@ -715,7 +807,7 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
                         style: TextStyle(color: _gold)),
                     const SizedBox(height: 8),
                     const Text(
-                        '“Vitrin yeniden dolacak. Bu kez saatin yanında yalnızca adı değil, hikâyesi de olacak. Hattı açık tut.”',
+                        '“Saati buldun. Ama bu hat neden yalnızca seni arıyor?”',
                         style: TextStyle(
                             color: _paper,
                             fontFamily: 'serif',
