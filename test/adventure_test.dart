@@ -59,58 +59,42 @@ void main() {
     expect((await CaseProgress.load()).solved, isEmpty);
   });
 
-  testWidgets(
-      'Desk opens the first written call and keeps the original mode available',
+  testWidgets('Desk opens the quick puzzle and classic mode stays available',
       (tester) async {
     await tester.pumpWidget(const KelimeHattiApp());
     await tester.pumpAndSettle();
     expect(find.text('Kayıp Emanet'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Eski Hat · İlk 10 bölüm'), 200);
     expect(find.text('Eski Hat · İlk 10 bölüm'), findsOneWidget);
-    await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('open-case')), -200);
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('open-case')), -200);
     await tester.tap(find.byKey(const ValueKey('open-case')));
-    await tester.pumpAndSettle();
-    expect(find.text(caseLevels.first.caller), findsOneWidget);
-    await tester.tap(find.text('İpucunu incele'));
     await tester.pumpAndSettle();
     expect(find.text('Dosya 01 · 1/12'), findsOneWidget);
     expect(find.byType(RotaryDial), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-      'Correct answer collects a single evidence card and advances the next call',
+  testWidgets('Automatic check saves a single evidence and moves ahead',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: GamePage(adventure: true)));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('İpucunu incele'));
     await tester.pumpAndSettle();
     for (final letter in caseLevels.first.answer.split('')) {
       tester.widget<RotaryDial>(find.byType(RotaryDial)).onLetter(letter);
       await tester.pump();
     }
-    await tester.tap(find.text('Kelimeyi\nKontrol Et'));
+    // The fast mode checks after the last dial selection, without a button tap.
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
-    expect(find.text('Yeni kanıt bulundu'), findsOneWidget);
-    expect(find.text(caseLevels.first.evidence), findsOneWidget);
     expect((await CaseProgress.load()).solved, {0});
     expect((await CaseProgress.load()).current, 1);
-    await tester.tap(find.text('Sonraki çağrı'));
-    await tester.pumpAndSettle();
-    expect(find.text(caseLevels[1].caller), findsOneWidget);
-    await tester.tap(find.text('İpucunu incele'));
-    await tester.pumpAndSettle();
     expect(find.text('Dosya 01 · 2/12'), findsOneWidget);
-    expect((await CaseProgress.load()).current, 1);
+    expect(find.byType(RotaryDial), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Hints persist and do not solve the puzzle automatically',
+  testWidgets('Hint persists without solving the quick puzzle',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: GamePage(adventure: true)));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('İpucunu incele'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('İpucu'));
     await tester.pumpAndSettle();
@@ -138,25 +122,19 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Entire case can be solved and reaches the deduction finale',
+  testWidgets('Automatic answers advance all 12 puzzles to the finale',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const MaterialApp(home: GamePage(adventure: true)));
     await tester.pumpAndSettle();
     for (var i = 0; i < caseLevels.length; i++) {
-      expect(find.text(caseLevels[i].caller), findsOneWidget);
-      await tester.tap(find.text('İpucunu incele'));
-      await tester.pumpAndSettle();
+      expect(find.text('Dosya 01 · ${i + 1}/12'), findsOneWidget);
       for (final letter in caseLevels[i].answer.split('')) {
         tester.widget<RotaryDial>(find.byType(RotaryDial)).onLetter(letter);
         await tester.pump();
       }
-      await tester.tap(find.text('Kelimeyi\nKontrol Et'));
-      await tester.pumpAndSettle();
-      expect(find.text(caseLevels[i].evidence), findsOneWidget);
-      await tester.tap(find.text(
-          i == caseLevels.length - 1 ? 'Son kararını ver' : 'Sonraki çağrı'));
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
     }
     expect(find.byType(CaseFinalePage), findsOneWidget);
