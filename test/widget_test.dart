@@ -16,7 +16,8 @@ void main() {
     expect(find.text('KAYIP MESAJ'), findsOneWidget);
     expect(find.text(levels.first.clue), findsOneWidget);
     expect(find.byType(RotaryDial), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNull);
+    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -32,12 +33,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('Kadran sesi geçerli ve boş olmayan bir WAV dosyasıdır', () async {
-    final data = await rootBundle.load('assets/sounds/rotary.wav');
-    final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    expect(bytes.length, greaterThan(44));
-    expect(String.fromCharCodes(bytes.take(4)), 'RIFF');
-    expect(String.fromCharCodes(bytes.skip(8).take(4)), 'WAVE');
-    expect(bytes.skip(44).any((byte) => byte != 0), isTrue);
+  test('Çevirme ve geri dönüş sesleri ayrı ve geçerli WAV dosyalarıdır',
+      () async {
+    for (final file in ['dial_wind.wav', 'dial_return.wav']) {
+      final data = await rootBundle.load('assets/sounds/$file');
+      final bytes =
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      expect(bytes.length, greaterThan(44));
+      expect(String.fromCharCodes(bytes.take(4)), 'RIFF');
+      expect(String.fromCharCodes(bytes.skip(8).take(4)), 'WAVE');
+      expect(bytes.skip(44).any((byte) => byte != 0), isTrue);
+    }
   });
 }
