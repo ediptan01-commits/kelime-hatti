@@ -120,6 +120,9 @@ class _GamePageState extends State<GamePage> {
   bool loading = true;
   bool checking = false;
   int attempts = 0;
+  int combo = 0;
+  int points = 0;
+  Timer? _wrongAnswerTimer;
   String? notice;
   CaseProgress? progress;
   late List<List<String>> shuffledDials;
@@ -194,12 +197,23 @@ class _GamePageState extends State<GamePage> {
       notice = null;
     });
     HapticFeedback.selectionClick();
+    if (typed.length == puzzles[levelIndex].answer.length) {
+      // Check only after the dial has returned and the last letter was added.
+      Future<void>.delayed(const Duration(milliseconds: 220), () {
+        if (mounted && !checking &&
+            typed.length == puzzles[levelIndex].answer.length) {
+          _check();
+        }
+      });
+    }
   }
 
   Future<void> _showCall() async {
     if (!widget.adventure || checking || progress == null) return;
     final i = levelIndex;
     final level = caseLevels[i];
+    // One short sentence keeps the mystery without interrupting play.
+    final shortMessage = level.message.split(RegExp(r'(?<=[.!?])\s+')).first;
     await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -220,7 +234,7 @@ class _GamePageState extends State<GamePage> {
                     Text('${i ~/ 4 + 1}. perde · ${_caseActs[i ~/ 4]}',
                         style: const TextStyle(color: _gold, fontSize: 12)),
                     const SizedBox(height: 14),
-                    Text('“${level.message}”',
+                    Text('“$shortMessage”',
                         style: const TextStyle(
                             color: _paper, fontSize: 17, height: 1.5)),
                   ])),
@@ -321,15 +335,28 @@ class _GamePageState extends State<GamePage> {
     if (checking || typed.isEmpty) return;
     if (typed != puzzles[levelIndex].answer) {
       HapticFeedback.heavyImpact();
+      _wrongAnswerTimer?.cancel();
       setState(() {
+        combo = 0;
         attempts++;
         notice = widget.adventure && attempts >= 2
             ? 'Birlikte çözelim · İpucu düğmesine dokun.'
-            : 'Hat meşgul! Kelimeyi yeniden dene.';
+            : 'Olmadı! Tekrar dene.';
+      });
+      // Let the player see the incorrect word briefly, then free the dial.
+      _wrongAnswerTimer = Timer(const Duration(milliseconds: 750), () {
+        if (mounted && !checking) {
+          setState(() => typed = '');
+        }
       });
       return;
     }
-    setState(() => checking = true);
+    _wrongAnswerTimer?.cancel();
+    setState(() {
+      checking = true;
+      combo++;
+      points += 100 + (combo - 1) * 25;
+    });
     HapticFeedback.mediumImpact();
     final i = levelIndex;
     final current = puzzles[i];
@@ -375,7 +402,7 @@ class _GamePageState extends State<GamePage> {
         typed = '';
         attempts = 0;
         notice = widget.adventure
-            ? '✓ ${current.answer} · ${current.incomingClue}'
+            ? '✓ ${current.answer} · $combo seri · $points puan'
             : last
                 ? 'Tebrikler! 10 bölüm tamamlandı.'
                 : null;
@@ -387,6 +414,12 @@ class _GamePageState extends State<GamePage> {
     } finally {
       if (mounted) setState(() => checking = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _wrongAnswerTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _chooseLevel() async {
