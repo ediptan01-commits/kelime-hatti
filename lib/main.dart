@@ -208,6 +208,58 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
+  // Optional 5-second interactive surprises at three story milestones.
+  // These never prevent story progress and do not change rotary audio.
+  static const _surpriseLevels = <int, ({String title, String question, String first, String second, int correct})>{
+    2: (title: 'GİZLİ NOT', question: 'Bir zarf açıldı! Hangisi önce incelenmeli?', first: 'Mühür', second: 'Masa', correct: 0),
+    5: (title: 'KAYIP İZ', question: 'Karanlıkta gizli yazıyı nasıl bulursun?', first: 'Işığa tut', second: 'Kâğıdı yırt', correct: 0),
+    8: (title: 'ŞÜPHELİ ÇAĞRI', question: 'Saati arayan kişinin izini nerede ararsın?', first: 'Arama kaydı', second: 'Hava durumu', correct: 0),
+  };
+
+  final Set<int> _surprisesClaimed = <int>{};
+
+  Future<void> _showSurprise() async {
+    if (!widget.adventure || checking || !_surpriseLevels.containsKey(levelIndex)) return;
+    final index = levelIndex;
+    if (_surprisesClaimed.contains(index)) return;
+    final event = _surpriseLevels[index]!;
+    final answer = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF172F30),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+      builder: (ctx) => SafeArea(child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.auto_awesome, color: _gold, size: 44),
+          const SizedBox(height: 10),
+          Text(event.title, style: const TextStyle(color: _gold, fontFamily: 'serif', fontSize: 23)),
+          const SizedBox(height: 12),
+          Text(event.question, textAlign: TextAlign.center,
+            style: const TextStyle(color: _paper, fontSize: 19)),
+          const SizedBox(height: 18),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, 0), child: Text(event.first))),
+            const SizedBox(width: 10),
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, 1), child: Text(event.second))),
+          ]),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Şimdi değil')),
+        ]),
+      )),
+    );
+    if (!mounted || answer == null) return;
+    if (answer == event.correct) {
+      setState(() {
+        _surprisesClaimed.add(index);
+        points += 150;
+        notice = '✦ Gizli ipucu! +150 puan';
+      });
+      HapticFeedback.mediumImpact();
+    } else {
+      setState(() => notice = 'Bir kez daha düşün!');
+    }
+  }
+
   Future<void> _showCall() async {
     if (!widget.adventure || checking || progress == null) return;
     final i = levelIndex;
@@ -549,6 +601,18 @@ class _GamePageState extends State<GamePage> {
                                   backgroundColor: const Color(0x663A4A45)),
                               icon: const Icon(Icons.menu_book,
                                   color: _gold, size: 22))),
+                    if (widget.adventure &&
+                        _surpriseLevels.containsKey(levelIndex) &&
+                        !_surprisesClaimed.contains(levelIndex))
+                      Positioned(
+                        left: 151,
+                        top: 8,
+                        child: IconButton(
+                          tooltip: 'Gizli sürpriz',
+                          onPressed: checking ? null : _showSurprise,
+                          icon: const Icon(Icons.auto_awesome, color: _gold, size: 25),
+                        ),
+                      ),
                     Positioned(
                         right: 12,
                         top: 10,
