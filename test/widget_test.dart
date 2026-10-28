@@ -9,7 +9,7 @@ void main() {
 
   testWidgets('Kelime Hattı açılır ve ilk bölüm görüntülenir', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const KelimeHattiApp());
+    await tester.pumpWidget(const MaterialApp(home: GamePage()));
     await tester.pumpAndSettle();
 
     expect(find.text('Bölüm 1'), findsOneWidget);
@@ -23,7 +23,7 @@ void main() {
 
   testWidgets('Kaydedilmiş bölümden devam eder', (tester) async {
     SharedPreferences.setMockInitialValues({'unlocked': 5});
-    await tester.pumpWidget(const KelimeHattiApp());
+    await tester.pumpWidget(const MaterialApp(home: GamePage()));
     await tester.pumpAndSettle();
 
     expect(find.text('Bölüm 6'), findsOneWidget);
