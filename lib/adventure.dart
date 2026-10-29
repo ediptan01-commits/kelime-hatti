@@ -614,7 +614,7 @@ class _CaseDetailPageState extends State<CaseDetailPage> {
                                         if (selected == null || !mounted) return;
                                         p.current = selected;
                                         await p.save();
-                                        if (!mounted) return;
+                                        if (!context.mounted) return;
                                         await Navigator.push<void>(context, MaterialPageRoute(builder: (_) => GamePage(adventure: true, caseId: widget.caseId)));
                                         await _refresh();
                                       },
