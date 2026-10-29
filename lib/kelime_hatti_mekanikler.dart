@@ -117,7 +117,12 @@ class _SwapLettersGameState extends State<SwapLettersGame> {
   void initState() {
     super.initState();
     tiles = widget.answer.split('');
-    final rng = math.Random(widget.answer.codeUnits.fold(13, (a, b) => a * 31 + b));
+    final rng = math.Random(
+  widget.answer.codeUnits.fold<int>(
+    13,
+    (a, b) => a * 31 + b,
+  ),
+);
     for (var tries = 0; tries < 12 && tiles.join() == widget.answer; tries++) {
       tiles.shuffle(rng);
     }
