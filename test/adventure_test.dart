@@ -59,11 +59,85 @@ void main() {
     expect((await CaseProgress.load()).solved, isEmpty);
   });
 
+
+  test('New case answers match the agreed order and fit the dial', () {
+    expect(caseFiles.map((f) => f.levels.length), [12, 12, 12]);
+    expect(caseFiles[1].levels.map((l) => l.answer), [
+      'BİLET', 'YOLCU', 'PERON', 'VALİZ', 'KİLİT', 'VAGON',
+      'PUSULA', 'DURAK', 'KİMLİK', 'TELGRAF', 'TÜNEL', 'MAKİNİST']);
+    expect(caseFiles[2].levels.map((l) => l.answer), [
+      'NUMARA', 'SANTRAL', 'SİNYAL', 'KAYIT', 'KABLO', 'NÖBET',
+      'PARAZİT', 'FREKANS', 'ŞALTER', 'ANAHTAR', 'OPERATÖR', 'GERÇEK']);
+    for (final file in caseFiles) {
+      for (final level in file.levels) {
+        expect(level.answer.split('').toSet().length, lessThanOrEqualTo(10));
+        expect(level.hints.length, 3);
+      }
+    }
+  });
+
+  test('All three cases retain independent progress and completion', () async {
+    for (var id = 0; id < 3; id++) {
+      await CaseProgress(caseId: id,
+        solved: Set.from(List.generate(id == 2 ? 12 : id + 1, (i) => i)),
+        calls: {id}, hints: {id: 2}, current: id,
+        closed: id == 2).save();
+    }
+    for (var id = 0; id < 3; id++) {
+      final saved = await CaseProgress.load(id);
+      expect(saved.solved.length, id == 2 ? 12 : id + 1);
+      expect(saved.calls, {id});
+      expect(saved.hints, {id: 2});
+      expect(saved.closed, id == 2);
+    }
+  });
+
+  for (final id in [1, 2]) {
+    testWidgets('Case ${id + 1} solves, completes, returns and replays', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const KelimeHattiApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(caseFiles[id].title));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.byKey(const ValueKey('open-case')), 150);
+      await tester.tap(find.byKey(const ValueKey('open-case')));
+      await tester.pumpAndSettle();
+      for (final level in caseFiles[id].levels) {
+        for (final letter in level.answer.split('')) {
+          tester.widget<RotaryDial>(find.byType(RotaryDial)).onLetter(letter);
+          await tester.pump();
+        }
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpAndSettle();
+      }
+      expect(find.byType(CaseFinalePage), findsOneWidget);
+      await tester.tap(find.text('Dosyayı tamamla · Ana menü'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CaseDeskPage), findsOneWidget);
+      expect((await CaseProgress.load(id)).closed, isTrue);
+      expect((await CaseProgress.load()).solved, isEmpty);
+      await tester.tap(find.text(caseFiles[id].title));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Bölüm seç · Yeniden oyna'), 150);
+      await tester.tap(find.text('Bölüm seç · Yeniden oyna'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('${id * 12 + 1}. ${caseFiles[id].levels.first.name}'));
+      await tester.pumpAndSettle();
+      expect(find.byType(RotaryDial), findsOneWidget);
+      expect((await CaseProgress.load(id)).current, 0);
+      expect((await CaseProgress.load(id)).closed, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('Desk opens the quick puzzle and classic mode stays available',
       (tester) async {
     await tester.pumpWidget(const KelimeHattiApp());
     await tester.pumpAndSettle();
     expect(find.text('Kayıp Emanet'), findsOneWidget);
+    await tester.tap(find.text('Kayıp Emanet'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Eski Hat · İlk 10 bölüm'), 200);
     expect(find.text('Eski Hat · İlk 10 bölüm'), findsOneWidget);
     await tester.scrollUntilVisible(find.byKey(const ValueKey('open-case')), -200);
@@ -111,6 +185,8 @@ void main() {
       (tester) async {
     await CaseProgress(solved: {0}, current: 1).save();
     await tester.pumpWidget(const KelimeHattiApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kayıp Emanet'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Kanıt ve Bilgi Defteri'), 200);
     await tester.tap(find.text('Kanıt ve Bilgi Defteri'));
