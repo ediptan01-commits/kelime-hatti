@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'adventure.dart';
+part 'kelime_hatti_mekanikler.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -258,6 +259,16 @@ class _GamePageState extends State<GamePage> {
     } else {
       setState(() => notice = 'Bir kez daha düşün!');
     }
+  }
+
+  void _completeAlternative(String candidate) {
+    if (checking || candidate.isEmpty) return;
+    _wrongAnswerTimer?.cancel();
+    setState(() {
+      typed = candidate;
+      notice = null;
+    });
+    _check();
   }
 
   Future<void> _showCall() async {
@@ -715,10 +726,21 @@ class _GamePageState extends State<GamePage> {
                         right: 11,
                         top: 337,
                         height: 338,
-                        child: RotaryDial(
-                            key: ValueKey(levelIndex),
-                            letters: letters,
-                            onLetter: _pick)),
+                        child: (widget.adventure && levelIndex % 12 == 1)
+                            ? ConnectLettersGame(
+                                key: ValueKey('connect-$levelIndex'),
+                                letters: letters,
+                                answer: level.answer,
+                                onSolved: _completeAlternative)
+                            : (widget.adventure && levelIndex % 12 == 2)
+                                ? SwapLettersGame(
+                                    key: ValueKey('swap-$levelIndex'),
+                                    answer: level.answer,
+                                    onSolved: _completeAlternative)
+                                : RotaryDial(
+                                    key: ValueKey(levelIndex),
+                                    letters: letters,
+                                    onLetter: _pick)),
                     Positioned(
                         left: 87,
                         right: 87,
