@@ -1,5 +1,6 @@
 name: Kelime Hatti Android APK
 on:
+  pull_request:
   workflow_dispatch:
   push:
     branches: [main, master]

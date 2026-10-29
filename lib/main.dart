@@ -108,7 +108,8 @@ class KelimeHattiApp extends StatelessWidget {
 
 class GamePage extends StatefulWidget {
   final bool adventure;
-  const GamePage({super.key, this.adventure = false});
+  final int caseId;
+  const GamePage({super.key, this.adventure = false, this.caseId = 0});
   @override
   State<GamePage> createState() => _GamePageState();
 }
@@ -125,6 +126,7 @@ class _GamePageState extends State<GamePage> {
   Timer? _wrongAnswerTimer;
   String? notice;
   CaseProgress? progress;
+  List<CaseLevel> get caseLevels => caseFiles[widget.caseId].levels;
   late List<List<String>> shuffledDials;
   List<Level> get puzzles => widget.adventure ? caseLevels : levels;
   List<String> get letters => shuffledDials[levelIndex];
@@ -179,7 +181,7 @@ class _GamePageState extends State<GamePage> {
 
   Future<void> _load() async {
     final pref = await SharedPreferences.getInstance();
-    final saved = widget.adventure ? await CaseProgress.load() : null;
+    final saved = widget.adventure ? await CaseProgress.load(widget.caseId) : null;
     if (!mounted) return;
     setState(() {
       progress = saved;
@@ -219,7 +221,7 @@ class _GamePageState extends State<GamePage> {
   final Set<int> _surprisesClaimed = <int>{};
 
   Future<void> _showSurprise() async {
-    if (!widget.adventure || checking || !_surpriseLevels.containsKey(levelIndex)) return;
+    if (!widget.adventure || widget.caseId != 0 || checking || !_surpriseLevels.containsKey(levelIndex)) return;
     final index = levelIndex;
     if (_surprisesClaimed.contains(index)) return;
     final event = _surpriseLevels[index]!;
@@ -446,7 +448,7 @@ class _GamePageState extends State<GamePage> {
       if (!mounted) return;
       if (last && widget.adventure) {
         await Navigator.pushReplacement<void, void>(
-            context, MaterialPageRoute(builder: (_) => const CaseFinalePage()));
+            context, MaterialPageRoute(builder: (_) => CaseFinalePage(caseId: widget.caseId)));
         return;
       }
       setState(() {
@@ -506,10 +508,10 @@ class _GamePageState extends State<GamePage> {
                                             ? Icons.radio_button_checked
                                             : Icons.lock_outline,
                                     color: i <= unlocked ? _gold : Colors.grey),
-                                title: Text('${i + 1}. ${puzzles[i].name}',
+                                title: Text('${i + 1 + (widget.adventure ? widget.caseId * 12 : 0)}. ${puzzles[i].name}',
                                     style: const TextStyle(color: _paper)),
                                 subtitle: widget.adventure
-                                    ? Text(_caseActs[i ~/ 4],
+                                    ? Text(widget.caseId == 0 ? _caseActs[i ~/ 4] : caseFiles[widget.caseId].title,
                                         style: const TextStyle(
                                             color: Color(0xFF98AD9A)))
                                     : null,
@@ -602,7 +604,7 @@ class _GamePageState extends State<GamePage> {
                               icon: const Icon(Icons.menu_book,
                                   color: _gold, size: 22))),
                     if (widget.adventure &&
-                        _surpriseLevels.containsKey(levelIndex) &&
+                        widget.caseId == 0 && _surpriseLevels.containsKey(levelIndex) &&
                         !_surprisesClaimed.contains(levelIndex))
                       Positioned(
                         left: 151,
@@ -635,7 +637,7 @@ class _GamePageState extends State<GamePage> {
                         height: 20,
                         child: Text(
                             widget.adventure
-                                ? 'Dosya 01 · ${levelIndex + 1}/12'
+                                ? widget.caseId == 0 ? 'Dosya 01 · ${levelIndex + 1}/12' : 'Dosya 0${widget.caseId + 1} · Bölüm ${widget.caseId * 12 + levelIndex + 1}'
                                 : 'Bölüm ${levelIndex + 1}',
                             textAlign: TextAlign.center,
                             style: const TextStyle(

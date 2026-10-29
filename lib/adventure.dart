@@ -332,17 +332,60 @@ final caseLevels =
       ]);
 }));
 
+
+final _newCaseLevels = <CaseLevel>[
+  CaseLevel('Son Bilet', 'Trene binmek için alınan yolculuk belgesi.', 'BİLET', 'Biletin arkasında gece yarısı yazıyor.', 'Biletin arkasında gece yarısı yazıyor.', caller: 'Gizemli hat', message: 'Biletin arkasında gece yarısı yazıyor.', evidence: 'Son Bilet · bulunan iz', fact: 'Trene binmek için alınan yolculuk belgesi.', hints: ['Trene binmek için alınan yolculuk belgesi.', 'İlk harf: B', 'Başlangıç: Bİ']),
+  CaseLevel('Kayıp Yolcu', 'Bir araçla seyahat eden kişi.', 'YOLCU', 'Listede bir kişinin adı silinmiş.', 'Listede bir kişinin adı silinmiş.', caller: 'Gizemli hat', message: 'Listede bir kişinin adı silinmiş.', evidence: 'Kayıp Yolcu · bulunan iz', fact: 'Bir araçla seyahat eden kişi.', hints: ['Bir araçla seyahat eden kişi.', 'İlk harf: Y', 'Başlangıç: YO']),
+  CaseLevel('Karanlık Peron', 'İstasyonda trene binilen platform.', 'PERON', 'Üç numaralı platformda bir valiz var.', 'Üç numaralı platformda bir valiz var.', caller: 'Gizemli hat', message: 'Üç numaralı platformda bir valiz var.', evidence: 'Karanlık Peron · bulunan iz', fact: 'İstasyonda trene binilen platform.', hints: ['İstasyonda trene binilen platform.', 'İlk harf: P', 'Başlangıç: PE']),
+  CaseLevel('Eski Valiz', 'Yolculukta eşyaları taşıyan saplı büyük çanta.', 'VALİZ', 'Çantanın içinde kilitli bir bölme var.', 'Çantanın içinde kilitli bir bölme var.', caller: 'Gizemli hat', message: 'Çantanın içinde kilitli bir bölme var.', evidence: 'Eski Valiz · bulunan iz', fact: 'Yolculukta eşyaları taşıyan saplı büyük çanta.', hints: ['Yolculukta eşyaları taşıyan saplı büyük çanta.', 'İlk harf: V', 'Başlangıç: VA']),
+  CaseLevel('Gizli Bölme', 'Anahtarla açılan kapatma düzeneği.', 'KİLİT', 'Bölme açıldı; altıncı vagonun planı çıktı.', 'Bölme açıldı; altıncı vagonun planı çıktı.', caller: 'Gizemli hat', message: 'Bölme açıldı; altıncı vagonun planı çıktı.', evidence: 'Gizli Bölme · bulunan iz', fact: 'Anahtarla açılan kapatma düzeneği.', hints: ['Anahtarla açılan kapatma düzeneği.', 'İlk harf: K', 'Başlangıç: Kİ']),
+  CaseLevel('Sessiz Vagon', 'Trenin yolcu veya yük taşıyan bölümü.', 'VAGON', 'Boş koltukta kırık bir pusula duruyor.', 'Boş koltukta kırık bir pusula duruyor.', caller: 'Gizemli hat', message: 'Boş koltukta kırık bir pusula duruyor.', evidence: 'Sessiz Vagon · bulunan iz', fact: 'Trenin yolcu veya yük taşıyan bölümü.', hints: ['Trenin yolcu veya yük taşıyan bölümü.', 'İlk harf: V', 'Başlangıç: VA']),
+  CaseLevel('Kırık Pusula', 'İğnesi kuzeyi gösteren yön bulma aracı.', 'PUSULA', 'İğnenin altındaki işaret son durağı gösteriyor.', 'İğnenin altındaki işaret son durağı gösteriyor.', caller: 'Gizemli hat', message: 'İğnenin altındaki işaret son durağı gösteriyor.', evidence: 'Kırık Pusula · bulunan iz', fact: 'İğnesi kuzeyi gösteren yön bulma aracı.', hints: ['İğnesi kuzeyi gösteren yön bulma aracı.', 'İlk harf: P', 'Başlangıç: PU']),
+  CaseLevel('Son İstasyon', 'Bir taşıtın yolcu almak için durduğu yer.', 'DURAK', 'Eski bekleme odasında bir kart bulundu.', 'Eski bekleme odasında bir kart bulundu.', caller: 'Gizemli hat', message: 'Eski bekleme odasında bir kart bulundu.', evidence: 'Son İstasyon · bulunan iz', fact: 'Bir taşıtın yolcu almak için durduğu yer.', hints: ['Bir taşıtın yolcu almak için durduğu yer.', 'İlk harf: D', 'Başlangıç: DU']),
+  CaseLevel('Kimliği Belirsiz', 'Bir kişinin kim olduğunu gösteren belge.', 'KİMLİK', 'Kart tren görevlisine ait; yanında yarım mesaj var.', 'Kart tren görevlisine ait; yanında yarım mesaj var.', caller: 'Gizemli hat', message: 'Kart tren görevlisine ait; yanında yarım mesaj var.', evidence: 'Kimliği Belirsiz · bulunan iz', fact: 'Bir kişinin kim olduğunu gösteren belge.', hints: ['Bir kişinin kim olduğunu gösteren belge.', 'İlk harf: K', 'Başlangıç: Kİ']),
+  CaseLevel('Yarım Kalmış Mesaj', 'Elektrik sinyalleriyle yazılı haber ileten eski sistem.', 'TELGRAF', 'Mesajda yolun kapandığı ve gizli geçit yazıyor.', 'Mesajda yolun kapandığı ve gizli geçit yazıyor.', caller: 'Gizemli hat', message: 'Mesajda yolun kapandığı ve gizli geçit yazıyor.', evidence: 'Yarım Kalmış Mesaj · bulunan iz', fact: 'Elektrik sinyalleriyle yazılı haber ileten eski sistem.', hints: ['Elektrik sinyalleriyle yazılı haber ileten eski sistem.', 'İlk harf: T', 'Başlangıç: TE']),
+  CaseLevel('Saklı Geçit', 'Dağın veya yerin içinden geçen kapalı yol.', 'TÜNEL', 'Tren burada saklanmış; sürücünün defteri bulundu.', 'Tren burada saklanmış; sürücünün defteri bulundu.', caller: 'Gizemli hat', message: 'Tren burada saklanmış; sürücünün defteri bulundu.', evidence: 'Saklı Geçit · bulunan iz', fact: 'Dağın veya yerin içinden geçen kapalı yol.', hints: ['Dağın veya yerin içinden geçen kapalı yol.', 'İlk harf: T', 'Başlangıç: TÜ']),
+  CaseLevel('Son Yolculuk', 'Treni kullanan görevli.', 'MAKİNİST', 'Sürücü herkesi kurtarmak için treni yan hatta almış.', 'Sürücü herkesi kurtarmak için treni yan hatta almış.', caller: 'Gizemli hat', message: 'Sürücü herkesi kurtarmak için treni yan hatta almış.', evidence: 'Son Yolculuk · bulunan iz', fact: 'Treni kullanan görevli.', hints: ['Treni kullanan görevli.', 'İlk harf: M', 'Başlangıç: MA']),
+  CaseLevel('Bilinmeyen Numara', 'Telefon aramak için çevrilen rakam dizisi.', 'NUMARA', 'Gizemli aramalar aynı hattan geliyor.', 'Gizemli aramalar aynı hattan geliyor.', caller: 'Gizemli hat', message: 'Gizemli aramalar aynı hattan geliyor.', evidence: 'Bilinmeyen Numara · bulunan iz', fact: 'Telefon aramak için çevrilen rakam dizisi.', hints: ['Telefon aramak için çevrilen rakam dizisi.', 'İlk harf: N', 'Başlangıç: NU']),
+  CaseLevel('Eski Santral', 'Telefon hatlarının birbirine bağlandığı merkez.', 'SANTRAL', 'Aramaların kaynağı terk edilmiş bağlantı merkezi.', 'Aramaların kaynağı terk edilmiş bağlantı merkezi.', caller: 'Gizemli hat', message: 'Aramaların kaynağı terk edilmiş bağlantı merkezi.', evidence: 'Eski Santral · bulunan iz', fact: 'Telefon hatlarının birbirine bağlandığı merkez.', hints: ['Telefon hatlarının birbirine bağlandığı merkez.', 'İlk harf: S', 'Başlangıç: SA']),
+  CaseLevel('Kayıp Sinyal', 'Bilgi taşıyan elektriksel işaret.', 'SİNYAL', 'Zayıf işaret bodrumdaki cihazdan geliyor.', 'Zayıf işaret bodrumdaki cihazdan geliyor.', caller: 'Gizemli hat', message: 'Zayıf işaret bodrumdaki cihazdan geliyor.', evidence: 'Kayıp Sinyal · bulunan iz', fact: 'Bilgi taşıyan elektriksel işaret.', hints: ['Bilgi taşıyan elektriksel işaret.', 'İlk harf: S', 'Başlangıç: Sİ']),
+  CaseLevel('Şifreli Kayıt', 'Bir sesin sonradan dinlemek için saklanmış hâli.', 'KAYIT', 'Bantta trenin yardım çağrısı duyuluyor.', 'Bantta trenin yardım çağrısı duyuluyor.', caller: 'Gizemli hat', message: 'Bantta trenin yardım çağrısı duyuluyor.', evidence: 'Şifreli Kayıt · bulunan iz', fact: 'Bir sesin sonradan dinlemek için saklanmış hâli.', hints: ['Bir sesin sonradan dinlemek için saklanmış hâli.', 'İlk harf: K', 'Başlangıç: KA']),
+  CaseLevel('Gizli Hat', 'Elektriği veya sinyali ileten yalıtılmış tel.', 'KABLO', 'Duvarın arkasındaki tel nöbet odasına gidiyor.', 'Duvarın arkasındaki tel nöbet odasına gidiyor.', caller: 'Gizemli hat', message: 'Duvarın arkasındaki tel nöbet odasına gidiyor.', evidence: 'Gizli Hat · bulunan iz', fact: 'Elektriği veya sinyali ileten yalıtılmış tel.', hints: ['Elektriği veya sinyali ileten yalıtılmış tel.', 'İlk harf: K', 'Başlangıç: KA']),
+  CaseLevel('Gece Nöbeti', 'Belirli bir süre görev başında bekleme işi.', 'NÖBET', 'O gece görevli olan kişinin adı defterde.', 'O gece görevli olan kişinin adı defterde.', caller: 'Gizemli hat', message: 'O gece görevli olan kişinin adı defterde.', evidence: 'Gece Nöbeti · bulunan iz', fact: 'Belirli bir süre görev başında bekleme işi.', hints: ['Belirli bir süre görev başında bekleme işi.', 'İlk harf: N', 'Başlangıç: NÖ']),
+  CaseLevel('Kesilen Ses', 'İletişimde duyulan istenmeyen cızırtı.', 'PARAZİT', 'Cızırtı temizlenince bir frekans duyuluyor.', 'Cızırtı temizlenince bir frekans duyuluyor.', caller: 'Gizemli hat', message: 'Cızırtı temizlenince bir frekans duyuluyor.', evidence: 'Kesilen Ses · bulunan iz', fact: 'İletişimde duyulan istenmeyen cızırtı.', hints: ['İletişimde duyulan istenmeyen cızırtı.', 'İlk harf: P', 'Başlangıç: PA']),
+  CaseLevel('Eski Frekans', 'Bir dalganın saniyedeki titreşim sayısı.', 'FREKANS', 'Doğru ayar gizli odanın yerini veriyor.', 'Doğru ayar gizli odanın yerini veriyor.', caller: 'Gizemli hat', message: 'Doğru ayar gizli odanın yerini veriyor.', evidence: 'Eski Frekans · bulunan iz', fact: 'Bir dalganın saniyedeki titreşim sayısı.', hints: ['Bir dalganın saniyedeki titreşim sayısı.', 'İlk harf: F', 'Başlangıç: FR']),
+  CaseLevel('Gizli Oda', 'Elektrik devresini açıp kapatan anahtar.', 'ŞALTER', 'Devre açıldı; masadaki kutu aydınlandı.', 'Devre açıldı; masadaki kutu aydınlandı.', caller: 'Gizemli hat', message: 'Devre açıldı; masadaki kutu aydınlandı.', evidence: 'Gizli Oda · bulunan iz', fact: 'Elektrik devresini açıp kapatan anahtar.', hints: ['Elektrik devresini açıp kapatan anahtar.', 'İlk harf: Ş', 'Başlangıç: ŞA']),
+  CaseLevel('Son Şifre', 'Kilidi açmak için kullanılan dişli araç.', 'ANAHTAR', 'Kutudan son görevlinin fotoğrafı çıktı.', 'Kutudan son görevlinin fotoğrafı çıktı.', caller: 'Gizemli hat', message: 'Kutudan son görevlinin fotoğrafı çıktı.', evidence: 'Son Şifre · bulunan iz', fact: 'Kilidi açmak için kullanılan dişli araç.', hints: ['Kilidi açmak için kullanılan dişli araç.', 'İlk harf: A', 'Başlangıç: AN']),
+  CaseLevel('Bilinmeyen Kişi', 'Santralde telefon bağlantılarını kuran görevli.', 'OPERATÖR', 'Görevli yardım çağrılarını yıllarca saklamış.', 'Görevli yardım çağrılarını yıllarca saklamış.', caller: 'Gizemli hat', message: 'Görevli yardım çağrılarını yıllarca saklamış.', evidence: 'Bilinmeyen Kişi · bulunan iz', fact: 'Santralde telefon bağlantılarını kuran görevli.', hints: ['Santralde telefon bağlantılarını kuran görevli.', 'İlk harf: O', 'Başlangıç: OP']),
+  CaseLevel('Son Telefon', 'Bir olayın sanıldığı gibi değil, olduğu hâli.', 'GERÇEK', 'Aramalar kaybolanların sesini unutturmamak içinmiş.', 'Aramalar kaybolanların sesini unutturmamak içinmiş.', caller: 'Gizemli hat', message: 'Aramalar kaybolanların sesini unutturmamak içinmiş.', evidence: 'Son Telefon · bulunan iz', fact: 'Bir olayın sanıldığı gibi değil, olduğu hâli.', hints: ['Bir olayın sanıldığı gibi değil, olduğu hâli.', 'İlk harf: G', 'Başlangıç: GE']),
+];
+
+class CaseFile {
+  final int id;
+  final String title, saveKey, ending;
+  final List<CaseLevel> levels;
+  const CaseFile(this.id, this.title, this.saveKey, this.levels, this.ending);
+}
+
+final caseFiles = <CaseFile>[
+  CaseFile(0, 'Kayıp Emanet', 'case_kayip_emanet_v1', caseLevels, 'Saat sahibinin izniyle onarıma götürülmüştü.'),
+  CaseFile(1, 'Gece Yarısı Treni', 'case_gece_yarisi_treni_v1', List.unmodifiable(_newCaseLevels.take(12)), 'Tren kaybolmamıştı. Makinist, kapanan yoldan yolcuları kurtarmak için yan hatta sığınmıştı. Defteri gerçeği ortaya çıkardı.'),
+  CaseFile(2, 'Son Bağlantı', 'case_son_baglanti_v1', List.unmodifiable(_newCaseLevels.skip(12)), 'Eski operatör, yardım çağrılarını kayıtlarda korumuştu. Gizemli hat bu sesleri sana ulaştırdı. Kayıp saat, tren ve santral artık aynı hikâyede birleşti.'),
+];
 const _caseActs = ['Kilitli Arşiv', 'Yanlış Hesap', 'Son Kayıt'];
-const _caseSaveKey = 'case_kayip_emanet_v1';
+
 
 class CaseProgress {
+  final int caseId;
+  List<CaseLevel> get caseLevels => caseFiles[caseId].levels;
   final Set<int> solved;
   final Map<int, int> hints;
   final Set<int> calls;
   int current;
   bool closed;
   CaseProgress(
-      {Set<int>? solved,
+      {this.caseId = 0,
+      Set<int>? solved,
       Map<int, int>? hints,
       Set<int>? calls,
       this.current = 0,
@@ -361,26 +404,26 @@ class CaseProgress {
 
   bool get allSolved => solved.length == caseLevels.length;
 
-  static Future<CaseProgress> load() async {
+  static Future<CaseProgress> load([int caseId = 0]) async {
     final pref = await SharedPreferences.getInstance();
     try {
-      final raw = pref.getString(_caseSaveKey);
-      if (raw == null) return CaseProgress();
+      final raw = pref.getString(caseFiles[caseId].saveKey);
+      if (raw == null) return CaseProgress(caseId: caseId);
       final data = jsonDecode(raw) as Map<String, dynamic>;
       Set<int> indices(dynamic value) => value is List
           ? value
               .whereType<int>()
-              .where((i) => i >= 0 && i < caseLevels.length)
+              .where((i) => i >= 0 && i < caseFiles[caseId].levels.length)
               .toSet()
           : {};
       final progress = CaseProgress(
-          solved: indices(data['solved']), calls: indices(data['calls']));
+          caseId: caseId, solved: indices(data['solved']), calls: indices(data['calls']));
       if (data['hints'] is Map) {
         for (final entry in (data['hints'] as Map).entries) {
           final i = int.tryParse(entry.key.toString());
           if (i != null &&
               i >= 0 &&
-              i < caseLevels.length &&
+              i < caseFiles[caseId].levels.length &&
               entry.value is int) {
             progress.hints[i] = (entry.value as int).clamp(0, 3);
           }
@@ -392,14 +435,14 @@ class CaseProgress {
       progress.closed = data['closed'] == true && progress.allSolved;
       return progress;
     } catch (_) {
-      return CaseProgress();
+      return CaseProgress(caseId: caseId);
     }
   }
 
   Future<void> save() async {
     final pref = await SharedPreferences.getInstance();
     await pref.setString(
-        _caseSaveKey,
+        caseFiles[caseId].saveKey,
         jsonEncode({
           'solved': solved.toList()..sort(),
           'calls': calls.toList()..sort(),
@@ -410,13 +453,15 @@ class CaseProgress {
   }
 }
 
-class CaseDeskPage extends StatefulWidget {
-  const CaseDeskPage({super.key});
+class CaseDetailPage extends StatefulWidget {
+  final int caseId;
+  const CaseDetailPage({super.key, this.caseId = 0});
   @override
-  State<CaseDeskPage> createState() => _CaseDeskPageState();
+  State<CaseDetailPage> createState() => _CaseDetailPageState();
 }
 
-class _CaseDeskPageState extends State<CaseDeskPage> {
+class _CaseDetailPageState extends State<CaseDetailPage> {
+  List<CaseLevel> get caseLevels => caseFiles[widget.caseId].levels;
   CaseProgress? progress;
   bool opening = false;
   @override
@@ -426,7 +471,7 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
   }
 
   Future<void> _refresh() async {
-    final value = await CaseProgress.load();
+    final value = await CaseProgress.load(widget.caseId);
     if (mounted) setState(() => progress = value);
   }
 
@@ -437,9 +482,9 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
       await Navigator.push<void>(
           context,
           MaterialPageRoute(
-              builder: (_) => progress!.allSolved && !progress!.closed
-                  ? const CaseFinalePage()
-                  : const GamePage(adventure: true)));
+              builder: (_) => progress!.allSolved && (!progress!.closed || widget.caseId > 0)
+                  ? CaseFinalePage(caseId: widget.caseId)
+                  : GamePage(adventure: true, caseId: widget.caseId)));
       if (mounted) await _refresh();
     } finally {
       if (mounted) setState(() => opening = false);
@@ -450,6 +495,7 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
   Widget build(BuildContext context) {
     final p = progress;
     return Scaffold(
+        appBar: AppBar(title: Text(caseFiles[widget.caseId].title)),
         body: Stack(children: [
       Positioned.fill(
           child: Image.asset('assets/art/scene.png', fit: BoxFit.cover)),
@@ -488,21 +534,21 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
                             child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('DOSYA 01 · TARİH & KÜLTÜR',
+                                  Text('DOSYA ${(widget.caseId + 1).toString().padLeft(2, '0')}',
                                       style: TextStyle(
                                           color: _gold,
                                           fontSize: 11,
                                           letterSpacing: 1.5)),
                                   const SizedBox(height: 10),
-                                  const Text('Kayıp Emanet',
+                                  Text(caseFiles[widget.caseId].title,
                                       style: TextStyle(
                                           color: _paper,
                                           fontFamily: 'serif',
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 12),
-                                  const Text(
-                                      'Saat kayıp!\nKısa bulmacaları çöz, izleri birleştir.\nHer cevap seni sırrına yaklaştırır.',
+                                  Text(
+                                      widget.caseId == 0 ? 'Saat kayıp!\nKısa bulmacaları çöz, izleri birleştir.' : 'Kısa bulmacaları çöz, gizemli hattın izini sür.',
                                       style: TextStyle(
                                           color: Color(0xFFD4D8CB),
                                           fontSize: 15,
@@ -544,11 +590,35 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
                                           label: Text(p?.closed == true
                                               ? 'Dosyayı yeniden incele'
                                               : p?.allSolved == true
-                                                  ? 'Son kararını ver'
+                                                  ? 'Dosya finalini aç'
                                                   : (p?.solved.isNotEmpty ??
                                                           false)
                                                       ? 'Kaldığın yerden devam et'
                                                       : 'Hattı aç'))),
+                                  if (p != null)
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.replay),
+                                      label: const Text('Bölüm seç · Yeniden oyna'),
+                                      onPressed: opening ? null : () async {
+                                        final selected = await showModalBottomSheet<int>(
+                                          context: context,
+                                          builder: (ctx) => SafeArea(child: ListView(
+                                            children: List.generate(12, (i) => ListTile(
+                                              enabled: i <= p.unlocked,
+                                              leading: Icon(p.solved.contains(i) ? Icons.check_circle : Icons.lock_open),
+                                              title: Text('${widget.caseId * 12 + i + 1}. ${caseLevels[i].name}'),
+                                              onTap: i > p.unlocked ? null : () => Navigator.pop(ctx, i),
+                                            )),
+                                          )),
+                                        );
+                                        if (selected == null || !mounted) return;
+                                        p.current = selected;
+                                        await p.save();
+                                        if (!mounted) return;
+                                        await Navigator.push<void>(context, MaterialPageRoute(builder: (_) => GamePage(adventure: true, caseId: widget.caseId)));
+                                        await _refresh();
+                                      },
+                                    ),
                                   const SizedBox(height: 8),
                                   const Text('12 kısa bulmaca · tek gizem',
                                       style: TextStyle(
@@ -571,7 +641,7 @@ class _CaseDeskPageState extends State<CaseDeskPage> {
                                           : Icons.lock_outline,
                                   color: unlocked ? _gold : Colors.white38),
                               title: Text(
-                                  '${act + 1}. perde · ${_caseActs[act]}',
+                                  '${act + 1}. perde · ${widget.caseId == 0 ? _caseActs[act] : ['İlk İz', 'Gizli Yol', 'Son Çağrı'][act]}',
                                   style: TextStyle(
                                       color: unlocked ? _paper : Colors.white38,
                                       fontFamily: 'serif')),
@@ -637,7 +707,7 @@ Future<void> _showNotebook(BuildContext context, CaseProgress progress) =>
                     child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                            '${progress.solved.length}/12 kanıt · Kayıp Emanet',
+                            '${progress.solved.length}/12 kanıt · ${caseFiles[progress.caseId].title}',
                             style: const TextStyle(color: _gold)))),
                 if (progress.solved.isEmpty)
                   const Padding(
@@ -648,9 +718,9 @@ Future<void> _showNotebook(BuildContext context, CaseProgress progress) =>
                 Expanded(
                     child: ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                        itemCount: caseLevels.length,
+                        itemCount: caseFiles[progress.caseId].levels.length,
                         itemBuilder: (context, i) {
-                          final level = caseLevels[i];
+                          final level = caseFiles[progress.caseId].levels[i];
                           final found = progress.solved.contains(i);
                           if (!found) {
                             return ListTile(
@@ -722,7 +792,8 @@ class _EvidenceContent extends StatelessWidget {
 }
 
 class CaseFinalePage extends StatefulWidget {
-  const CaseFinalePage({super.key});
+  final int caseId;
+  const CaseFinalePage({super.key, this.caseId = 0});
   @override
   State<CaseFinalePage> createState() => _CaseFinalePageState();
 }
@@ -739,7 +810,7 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
   }
 
   Future<void> _load() async {
-    final value = await CaseProgress.load();
+    final value = await CaseProgress.load(widget.caseId);
     if (mounted) setState(() => progress = value);
   }
 
@@ -747,7 +818,7 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
     if (progress == null || !progress!.allSolved || choice == null || saving) {
       return;
     }
-    if (choice != 1) {
+    if (widget.caseId == 0 && choice != 1) {
       setState(() => feedback = 'İzin + usta + iade makbuzu. Bir daha düşün!');
       return;
     }
@@ -793,7 +864,19 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
                     const Text(
                         'Son kararı vermeden önce 12 kanıtı da bulmalısın.',
                         style: TextStyle(color: _paper))
-                  else if (p.closed) ...[
+                  else if (widget.caseId > 0) ...[
+                    Text(caseFiles[widget.caseId].ending, style: const TextStyle(color: _paper, fontSize: 20, height: 1.5)),
+                    const SizedBox(height: 20),
+                    Text(p.closed ? '🏆 Dosya çözüldü · 12/12' : '12 kanıt tamamlandı!', style: const TextStyle(color: _gold)),
+                    FilledButton(onPressed: saving ? null : () async {
+                      setState(() => saving = true);
+                      try {
+                        p.closed = true;
+                        await p.save();
+                        if (context.mounted) Navigator.popUntil(context, (route) => route.isFirst);
+                      } finally { if (mounted) setState(() => saving = false); }
+                    }, child: const Text('Dosyayı tamamla · Ana menü')),
+                  ] else if (p.closed) ...[
                     const Text('Saat çalınmamıştı.',
                         style: TextStyle(
                             color: _gold, fontFamily: 'serif', fontSize: 24)),
@@ -816,8 +899,8 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
                             height: 1.4)),
                     const SizedBox(height: 24),
                     FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Dosya masasına dön')),
+                        onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+                        child: const Text('Ana menüye dön')),
                   ] else ...[
                     const Text(
                         '09.00 · Sahibinin sevk izni\n10.00 · 42 numaralı saat atölyeye teslim\n10.15 · “Satış yok” mesajı',
@@ -876,4 +959,39 @@ class _CaseFinalePageState extends State<CaseFinalePage> {
                   ],
                 ]))));
   }
+}
+
+class CaseDeskPage extends StatefulWidget {
+  const CaseDeskPage({super.key});
+  @override
+  State<CaseDeskPage> createState() => _CaseDeskPageState();
+}
+
+class _CaseDeskPageState extends State<CaseDeskPage> {
+  List<CaseProgress>? progress;
+  @override
+  void initState() { super.initState(); _refresh(); }
+  Future<void> _refresh() async {
+    final values = await Future.wait(List.generate(3, CaseProgress.load));
+    if (mounted) setState(() => progress = values);
+  }
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('KELİME HATTI · Dosyalar')),
+    body: ListView(padding: const EdgeInsets.all(20), children: [
+      const Text('36 bölüm · 3 gizem', style: TextStyle(color: _gold, fontSize: 22)),
+      const SizedBox(height: 16),
+      for (final file in caseFiles)
+        Card(child: ListTile(
+          leading: Icon(progress?[file.id].closed == true ? Icons.verified : Icons.folder_open, color: _gold),
+          title: Text(file.title),
+          subtitle: Text('Dosya 0${file.id + 1} · Bölüm ${file.id * 12 + 1}–${file.id * 12 + 12}\n${progress?[file.id].solved.length ?? 0}/12 · ${progress?[file.id].closed == true ? "Tamamlandı · Yeniden oyna" : "Devam et / Bölüm seç"}'),
+          isThreeLine: true,
+          onTap: progress == null ? null : () async {
+            await Navigator.push<void>(context, MaterialPageRoute(builder: (_) => CaseDetailPage(caseId: file.id)));
+            await _refresh();
+          },
+        )),
+    ]),
+  );
 }
