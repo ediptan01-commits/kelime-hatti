@@ -70,7 +70,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-case')));
     await tester.pumpAndSettle();
     expect(find.text('Dosya 01 · 1/12'), findsOneWidget);
-    expect(find.byType(RotaryDial), findsOneWidget);
+    expect(find.byType(ConnectLettersGame), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -130,10 +130,27 @@ void main() {
     await tester.pumpAndSettle();
     for (var i = 0; i < caseLevels.length; i++) {
       expect(find.text('Dosya 01 · ${i + 1}/12'), findsOneWidget);
-      for (final letter in caseLevels[i].answer.split('')) {
-        tester.widget<RotaryDial>(find.byType(RotaryDial)).onLetter(letter);
-        await tester.pump();
-      }
+   final answer = caseLevels[i].answer;
+
+if (i % 12 == 1) {
+  // Harf birleştirme
+  tester
+      .widget<ConnectLettersGame>(find.byType(ConnectLettersGame))
+      .onSolved(answer);
+  await tester.pump();
+} else if (i % 12 == 2) {
+  // Harf sıralama
+  tester
+      .widget<SwapLettersGame>(find.byType(SwapLettersGame))
+      .onSolved(answer);
+  await tester.pump();
+} else {
+  // Klasik telefon çarkı
+  for (final letter in answer.split('')) {
+    tester.widget<RotaryDial>(find.byType(RotaryDial)).onLetter(letter);
+    await tester.pump();
+  }
+}
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
     }
